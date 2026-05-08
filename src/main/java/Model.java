@@ -13,27 +13,37 @@ public class Model extends Entity {
 
     public static int counter;
 
-    public static int[] tmpVertexX = new int[2000];
-    public static int[] tmpVertexY = new int[2000];
-    public static int[] tmpVertexZ = new int[2000];
-    public static int[] tmpFaceAlpha = new int[2000];
+    // Upgraded from 2000 to 65000 to handle high-poly model vertices
+    public static int[] tmpVertexX = new int[65000];
+    public static int[] tmpVertexY = new int[65000];
+    public static int[] tmpVertexZ = new int[65000];
+    public static int[] tmpFaceAlpha = new int[65000];
+
     public static Header[] headers;
     public static OnDemand ondemand;
-    public static boolean[] faceClippedX = new boolean[4096];
-    public static boolean[] faceNearClipped = new boolean[4096];
-    public static int[] vertexScreenX = new int[4096];
-    public static int[] vertexScreenY = new int[4096];
-    public static int[] vertexScreenZ = new int[4096];
-    public static int[] vertexViewSpaceX = new int[4096];
-    public static int[] vertexViewSpaceY = new int[4096];
-    public static int[] vertexViewSpaceZ = new int[4096];
+
+    // Upgraded from 4096 to 65000 to handle increased face/triangle counts
+    public static boolean[] faceClippedX = new boolean[65000];
+    public static boolean[] faceNearClipped = new boolean[65000];
+    public static int[] vertexScreenX = new int[65000];
+    public static int[] vertexScreenY = new int[65000];
+    public static int[] vertexScreenZ = new int[65000];
+    public static int[] vertexViewSpaceX = new int[65000];
+    public static int[] vertexViewSpaceY = new int[65000];
+    public static int[] vertexViewSpaceZ = new int[65000];
 
     public static int[] tmpDepthFaceCount = new int[1500];
-    public static int[][] tmpDepthFaces = new int[1500][512];
+
+    // Upgraded secondary dimension from 512 to 2048 to prevent depth-sorting overflow
+    public static int[][] tmpDepthFaces = new int[1500][2048];
+
     public static int[] tmpPriorityFaceCount = new int[12];
-    public static int[][] tmpPriorityFaces = new int[12][2000];
-    public static int[] tmpPriority10FaceDepth = new int[2000];
-    public static int[] tmpPriority11FaceDepth = new int[2000];
+
+    // Upgraded from 2000 to 65000 to match the face count capacity
+    public static int[][] tmpPriorityFaces = new int[12][65000];
+    public static int[] tmpPriority10FaceDepth = new int[65000];
+    public static int[] tmpPriority11FaceDepth = new int[65000];
+
     public static int[] tmpPriorityDepthSum = new int[12];
     public static int baseX;
     public static int baseY;

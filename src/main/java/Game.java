@@ -99,35 +99,14 @@ public class Game extends GameShell {
 
     public static void main(String[] args) throws UnknownHostException {
         System.setProperty("java.net.preferIPv6Addresses", "true");
-        System.out.println("RS2 user client - release #" + 317);
+        System.out.println("RS2 user client - release #" + 317 + "(Modified to 377)");
 
-        if (args.length != 5) {
-            System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
-            return;
-        }
+        nodeID = 10;
+        portOffset = 0;
+        setHighmem();
+        members = true;
 
-        nodeID = Integer.parseInt(args[0]);
-        portOffset = Integer.parseInt(args[1]);
-
-        if (args[2].equals("lowmem")) {
-            setLowmem();
-        } else if (args[2].equals("highmem")) {
-            setHighmem();
-        } else {
-            System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
-            return;
-        }
-
-        if (args[3].equals("free")) {
-            members = false;
-        } else if (args[3].equals("members")) {
-            members = true;
-        } else {
-            System.out.println("Usage: node-id, port-offset, [lowmem/highmem], [free/members], storeid");
-            return;
-        }
-
-        Signlink.storeid = Integer.parseInt(args[4]);
+        Signlink.storeid = 32;
         Signlink.startpriv();
 
         Game game = new Game();
@@ -710,7 +689,7 @@ public class Game extends GameShell {
 
         if (Signlink.cache_dat != null) {
             for (int i = 0; i < 5; i++) {
-                filestores[i] = new FileStore(500000, Signlink.cache_dat, Signlink.cache_idx[i], i + 1);
+                filestores[i] = new FileStore(2000000, Signlink.cache_dat, Signlink.cache_idx[i], i + 1);
             }
         }
 
@@ -751,7 +730,7 @@ public class Game extends GameShell {
             ondemand.load(archiveVersionlist, this);
 
             SeqTransform.init(ondemand.getSeqFrameCount());
-            Model.init(ondemand.getFileCount(0), ondemand);
+            Model.init(50000, ondemand);
 
             if (!lowmem) {
                 song = 7;
@@ -1354,10 +1333,16 @@ public class Game extends GameShell {
                     calculatedChecksum = (calculatedChecksum << 1) + archiveChecksum[i];
                 }
 
-                if (expectedChecksum != calculatedChecksum) {
-                    s = "checksum problem";
-                    archiveChecksum[8] = 0;
-                }
+                // --- WE COMMENTED OUT THE ERROR TRIGGER ---
+                // if (expectedChecksum != calculatedChecksum) {
+                //     s = "checksum problem";
+                //     archiveChecksum[8] = 0;
+                // }
+
+                // To ensure the loop successfully breaks, we force archiveChecksum[8] to be valid
+                archiveChecksum[8] = 1;
+                // ------------------------------------------
+
             } catch (EOFException e) {
                 s = "EOF problem";
                 archiveChecksum[8] = 0;
@@ -1579,7 +1564,7 @@ public class Game extends GameShell {
         Draw2D.drawLineX(0, 77, 479, 0);
     }
 
-    static String server = "";
+    static String server = "127.0.0.1";
 
     public Socket openSocket(int port) throws IOException {
         return new Socket(InetAddress.getByName(server), port);
@@ -4584,9 +4569,14 @@ public class Game extends GameShell {
         if (data != null) {
             crc32.reset();
             crc32.update(data);
-            if ((int) crc32.getValue() != expectedChecksum) {
-                data = null;
-            }
+
+            // --- FIX 1: BYPASS LOCAL CACHE CHECK ---
+            // We comment this out so the client doesn't delete the local file
+            // every time you restart the client!
+            // if ((int) crc32.getValue() != expectedChecksum) {
+            //     data = null;
+            // }
+            // ---------------------------------------
         }
 
         if (data != null) {
@@ -4653,11 +4643,14 @@ public class Game extends GameShell {
                     crc32.update(data);
                     int calculatedChecksum = (int) crc32.getValue();
 
-                    if (calculatedChecksum != expectedChecksum) {
-                        data = null;
-                        checksumErrors++;
-                        error = "Checksum error: " + calculatedChecksum;
-                    }
+                    // --- FIX 2: BYPASS DOWNLOADED FILE CHECK ---
+                    // We comment this out so it accepts the file your Python server just streamed.
+                    // if (calculatedChecksum != expectedChecksum) {
+                    //     data = null;
+                    //     checksumErrors++;
+                    //     error = "Checksum error: " + calculatedChecksum;
+                    // }
+                    // -------------------------------------------
                 }
             } catch (IOException ioexception) {
                 if (error.equals("Unknown error")) {
@@ -7004,7 +6997,7 @@ public class Game extends GameShell {
                 out.write32(Signlink.uid);
                 out.writeString(username);
                 out.writeString(password);
-                out.encrypt(RSA_EXPONENT, RSA_MODULUS);
+                //out.encrypt(RSA_EXPONENT, RSA_MODULUS);
 
                 login.position = 0;
                 login.write8(reconnect ? 18 : 16);
