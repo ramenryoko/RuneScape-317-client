@@ -99,7 +99,7 @@ public class Game extends GameShell {
 
     public static void main(String[] args) throws UnknownHostException {
         System.setProperty("java.net.preferIPv6Addresses", "true");
-        System.out.println("RS2 user client - release #" + 317 + "(Modified to 377)");
+        System.out.println("RS2 user client - release #" + 317 + " (Modified to 377)");
 
         nodeID = 10;
         portOffset = 0;
