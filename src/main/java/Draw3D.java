@@ -17,7 +17,7 @@ public class Draw3D {
      * @see #drawTexturedScanline(int[], int[], int, int, int, int, int, int, int, int, int, int, int, int, int)
      */
     public static final int[] reciprocal15 = new int[512];
-    public static boolean lowmem = true;
+    public static boolean lowmem = false;
     /**
      * Setting this to <code>true</code> enables horizontal clipping for scanlines.
      */

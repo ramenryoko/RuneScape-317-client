@@ -108,7 +108,7 @@ public class Scene {
     public static final int[] TEXTURE_HSL = {41, 39248, 41, 4643, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 43086, 41, 41, 41, 41, 41, 41, 41, 8602, 41, 28992, 41, 41, 41, 41, 41, 5056, 41, 41, 41, 7079, 41, 41, 41, 41, 41, 41, 41, 41, 41, 41, 3131, 41, 41, 41};
     public static final int LEVEL_COUNT = 4;
     public static final SceneOccluder[] activeOccluders = new SceneOccluder[500];
-    public static boolean lowmem = true;
+    public static boolean lowmem = false;
     public static int tilesRemaining;
     public static int topLevel;
     public static int cycle;

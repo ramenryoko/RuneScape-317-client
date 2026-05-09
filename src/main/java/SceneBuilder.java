@@ -10,7 +10,7 @@ public class SceneBuilder {
     public static int level;
     public static int randomLightnessOffset = (int) (Math.random() * 33.0) - 16;
     public static int minLevel = 99;
-    public static boolean lowmem = true;
+    public static boolean lowmem = false;
 
     public static int noise(int x, int y) {
         int n = x + (y * 57);
