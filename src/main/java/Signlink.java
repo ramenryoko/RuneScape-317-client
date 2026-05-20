@@ -1,8 +1,14 @@
 // Decompiled by Jad v1.5.8f. Copyright 2001 Pavel Kouznetsov.
 // Jad home page: http://www.kpdus.com/jad.html
-// Decompiler options: packimports(3) 
+// Decompiler options: packimports(3)
 // Source File Name:   signlink.java
 
+import javax.sound.midi.MidiSystem;
+import javax.sound.midi.Sequence;
+import javax.sound.midi.Sequencer;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import java.io.*;
 import java.net.InetAddress;
 import java.nio.file.Files;
@@ -33,6 +39,9 @@ public class Signlink implements Runnable {
     public static int wavevol;
     public static boolean reporterror = true;
 
+    private static Sequencer midiSequencer = null;
+    private static Clip waveClip = null;
+
     public static void startpriv() {
         threadliveid = (int) (Math.random() * 99999999D);
 
@@ -59,11 +68,29 @@ public class Signlink implements Runnable {
     }
 
     public static String findcachedir() {
-        String[] as = {"c:/windows/", "c:/winnt/", "d:/windows/", "d:/winnt/", "e:/windows/", "e:/winnt/", "f:/windows/", "f:/winnt/", "c:/", System.getProperty("user.home") + "/", "/tmp/", "", "c:/rscache", "/rscache"};
+        String[] as = {
+                "c:/windows/",
+                "c:/winnt/",
+                "d:/windows/",
+                "d:/winnt/",
+                "e:/windows/",
+                "e:/winnt/",
+                "f:/windows/",
+                "f:/winnt/",
+                "c:/",
+                System.getProperty("user.home") + "/",
+                "/tmp/",
+                "",
+                "c:/rscache",
+                "/rscache"
+        };
+
         if ((storeid < 32) || (storeid > 34)) {
             storeid = 32;
         }
+
         String s = ".file_store_" + storeid;
+
         for (String a : as) {
             try {
                 if (a.length() > 0) {
@@ -72,6 +99,7 @@ public class Signlink implements Runnable {
                         continue;
                     }
                 }
+
                 File file1 = new File(a + s);
                 if (file1.exists() || file1.mkdir()) {
                     return a + s + "/";
@@ -79,6 +107,7 @@ public class Signlink implements Runnable {
             } catch (Exception ignored) {
             }
         }
+
         return null;
     }
 
@@ -115,39 +144,135 @@ public class Signlink implements Runnable {
         if (len > 2000000) {
             return false;
         }
+
         if (savereq != null) {
             return false;
-        } else {
-            wavepos = (wavepos + 1) % 5;
-            savelen = len;
-            savebuf = src;
-            waveplay = true;
-            savereq = "sound" + wavepos + ".wav";
-            return true;
         }
+
+        wavepos = (wavepos + 1) % 5;
+        savelen = len;
+        savebuf = src;
+        waveplay = true;
+        savereq = "sound" + wavepos + ".wav";
+        return true;
     }
 
     public static synchronized boolean wavereplay() {
         if (savereq != null) {
             return false;
-        } else {
-            savebuf = null;
-            waveplay = true;
-            savereq = "sound" + wavepos + ".wav";
-            return true;
         }
+
+        savebuf = null;
+        waveplay = true;
+        savereq = "sound" + wavepos + ".wav";
+        return true;
     }
 
     public static synchronized void midisave(byte[] data, int len) {
         if (len > 0x1e8480) {
+            System.out.println("[MIDI] rejected oversized midi len=" + len);
             return;
         }
+
         if (savereq == null) {
             midipos = (midipos + 1) % 5;
             savelen = len;
             savebuf = data;
             midiplay = true;
             savereq = "jingle" + midipos + ".mid";
+
+            System.out.println("[MIDI] queued midi save len=" + len + " file=" + savereq);
+        } else {
+            System.out.println("[MIDI] save request busy, dropped midi len=" + len);
+        }
+    }
+
+    public static synchronized void stopMidi() {
+        try {
+            if (midiSequencer != null) {
+                midiSequencer.stop();
+                midiSequencer.close();
+                midiSequencer = null;
+            }
+        } catch (Exception e) {
+            System.out.println("[MIDI] failed to stop midi");
+            e.printStackTrace();
+        }
+    }
+
+    public static synchronized void playMidi(String path) {
+        try {
+            stopMidi();
+
+            File midiFile = new File(path);
+            if (!midiFile.exists()) {
+                System.out.println("[MIDI] file does not exist: " + path);
+                return;
+            }
+
+            if (midiFile.length() <= 0) {
+                System.out.println("[MIDI] file is empty: " + path);
+                return;
+            }
+
+            midiSequencer = MidiSystem.getSequencer();
+
+            if (midiSequencer == null) {
+                System.out.println("[MIDI] no MIDI sequencer available");
+                return;
+            }
+
+            Sequence sequence = MidiSystem.getSequence(midiFile);
+
+            midiSequencer.open();
+            midiSequencer.setSequence(sequence);
+            midiSequencer.setLoopCount(Sequencer.LOOP_CONTINUOUSLY);
+            midiSequencer.start();
+
+            System.out.println("[MIDI] playing midi: " + path + " size=" + midiFile.length());
+        } catch (Exception e) {
+            System.out.println("[MIDI] failed to play midi: " + path);
+            e.printStackTrace();
+        }
+    }
+
+    public static synchronized void stopWave() {
+        try {
+            if (waveClip != null) {
+                waveClip.stop();
+                waveClip.close();
+                waveClip = null;
+            }
+        } catch (Exception e) {
+            System.out.println("[WAVE] failed to stop wave");
+            e.printStackTrace();
+        }
+    }
+
+    public static synchronized void playWave(String path) {
+        try {
+            stopWave();
+
+            File waveFile = new File(path);
+            if (!waveFile.exists()) {
+                System.out.println("[WAVE] file does not exist: " + path);
+                return;
+            }
+
+            if (waveFile.length() <= 0) {
+                System.out.println("[WAVE] file is empty: " + path);
+                return;
+            }
+
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(waveFile);
+            waveClip = AudioSystem.getClip();
+            waveClip.open(audioInputStream);
+            waveClip.start();
+
+            System.out.println("[WAVE] playing wave: " + path + " size=" + waveFile.length());
+        } catch (Exception e) {
+            System.out.println("[WAVE] failed to play wave: " + path);
+            e.printStackTrace();
         }
     }
 
@@ -155,9 +280,11 @@ public class Signlink implements Runnable {
         if (!reporterror) {
             return;
         }
+
         if (!active) {
             return;
         }
+
         System.out.println("Error: " + s);
     }
 
@@ -188,24 +315,37 @@ public class Signlink implements Runnable {
                 } catch (Exception _ex) {
                     dns = "unknown";
                 }
+
                 dnsreq = null;
+
             } else if (savereq != null) {
+                String savedPath = cachedir + savereq;
+
                 if (savebuf != null) {
                     try {
-                        FileOutputStream fileoutputstream = new FileOutputStream(cachedir + savereq);
+                        FileOutputStream fileoutputstream = new FileOutputStream(savedPath);
                         fileoutputstream.write(savebuf, 0, savelen);
                         fileoutputstream.close();
-                    } catch (Exception ignored) {
+
+                        System.out.println("[MEDIA] saved file: " + savedPath + " len=" + savelen);
+                    } catch (Exception e) {
+                        System.out.println("[MEDIA] failed saving file: " + savedPath);
+                        e.printStackTrace();
                     }
                 }
+
                 if (waveplay) {
-                    wave = cachedir + savereq;
+                    wave = savedPath;
                     waveplay = false;
+                    playWave(wave);
                 }
+
                 if (midiplay) {
-                    midi = cachedir + savereq;
+                    midi = savedPath;
                     midiplay = false;
+                    playMidi(midi);
                 }
+
                 savereq = null;
             }
 
@@ -214,6 +354,8 @@ public class Signlink implements Runnable {
             } catch (Exception ignored) {
             }
         }
-    }
 
+        stopMidi();
+        stopWave();
+    }
 }

@@ -91,11 +91,21 @@ public class Game extends GameShell {
     }
 
     public static void setHighmem() {
+        System.out.println("[MEMORY MODE] setHighmem() called");
+
         Scene.lowmem = false;
         Draw3D.lowmem = false;
         lowmem = false;
         SceneBuilder.lowmem = false;
         LocType.lowmem = false;
+
+        System.out.println(
+                "[MEMORY MODE] Game.lowmem=" + lowmem +
+                        ", Scene.lowmem=" + Scene.lowmem +
+                        ", Draw3D.lowmem=" + Draw3D.lowmem +
+                        ", SceneBuilder.lowmem=" + SceneBuilder.lowmem +
+                        ", LocType.lowmem=" + LocType.lowmem
+        );
     }
 
     public static void main(String[] args) throws UnknownHostException {
@@ -138,6 +148,9 @@ public class Game extends GameShell {
     }
 
     public static void setLowmem() {
+        System.out.println("[MEMORY MODE] setLowmem() called");
+        Thread.dumpStack();
+
         Scene.lowmem = true;
         Draw3D.lowmem = true;
         lowmem = true;
