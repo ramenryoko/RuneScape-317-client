@@ -20,6 +20,7 @@ import java.util.zip.CRC32;
 
 public class Game extends GameShell {
 
+    private static final boolean DEBUG_AUTOCAST_VARPS = true;
     public static final int[][] designPartColor = {{6798, 107, 10283, 16, 4797, 7744, 5799, 4634, 33697, 22433, 2983, 54193}, {8741, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003, 25239}, {25238, 8742, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003}, {4626, 11146, 6439, 12, 4758, 10270}, {4550, 4537, 5681, 5673, 5790, 6806, 8076, 4574}};
     public static final int[] designHairColor = {9104, 10275, 7595, 3610, 7975, 8526, 918, 38802, 24466, 10145, 58654, 5027, 1457, 16565, 34991, 25486};
     public static final BigInteger RSA_MODULUS = new BigInteger("7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789");
@@ -32,7 +33,7 @@ public class Game extends GameShell {
     public static int nodeID = 10;
     public static int portOffset;
     public static boolean members = true;
-    public static boolean lowmem;
+    public static boolean lowmem = false;
     public static boolean started;
     public static int drawCycle;
     public static PlayerEntity localPlayer;
@@ -5362,11 +5363,49 @@ public class Game extends GameShell {
     private void useSelectOption(int interfaceID) {
         out.writeOp(185);
         out.write16(interfaceID);
+
         IfType iface = IfType.instances[interfaceID];
+
+        if (DEBUG_AUTOCAST_VARPS) {
+            System.out.println(
+                    "[IF_SELECT] interface=" + interfaceID +
+                            " parent=" + iface.parentID +
+                            " option=" + iface.option +
+                            " text=" + iface.text +
+                            " activeText=" + iface.activeText +
+                            " scripts0=" + (
+                            iface.scripts != null && iface.scripts.length > 0
+                                    ? java.util.Arrays.toString(iface.scripts[0])
+                                    : "null"
+                    ) +
+                            " comparator0=" + (
+                            iface.scriptComparator != null && iface.scriptComparator.length > 0
+                                    ? iface.scriptComparator[0]
+                                    : -999
+                    ) +
+                            " operand0=" + (
+                            iface.scriptOperand != null && iface.scriptOperand.length > 0
+                                    ? iface.scriptOperand[0]
+                                    : -999
+                    )
+            );
+        }
+
         if ((iface.scripts != null) && (iface.scripts[0][0] == 5)) {
             int varpID = iface.scripts[0][1];
-            if (varps[varpID] != iface.scriptOperand[0]) {
-                varps[varpID] = iface.scriptOperand[0];
+            int newValue = iface.scriptOperand[0];
+
+            if (DEBUG_AUTOCAST_VARPS) {
+                System.out.println(
+                        "[IF_SELECT_VARP] interface=" + interfaceID +
+                                " varp=" + varpID +
+                                " old=" + varps[varpID] +
+                                " new=" + newValue
+                );
+            }
+
+            if (varps[varpID] != newValue) {
+                varps[varpID] = newValue;
                 updateVarp(varpID);
                 redrawSidebar = true;
             }
@@ -9765,8 +9804,24 @@ public class Game extends GameShell {
                         }
                     }
                 } else if (code == 5) { // load_var {id}
-                    register = varps[script[pos++]];
-                } else if (code == 6) { // load_next_level_xp {skill}
+                int debugVarp = script[pos++];
+                register = varps[debugVarp];
+
+                if (DEBUG_AUTOCAST_VARPS && (
+                        debugVarp == 43 ||
+                                debugVarp == 108 ||
+                                debugVarp < 300
+                )) {
+                    System.out.println(
+                            "[IF_SCRIPT_LOAD_VAR] iface=" + iface.id +
+                                    " script=" + scriptId +
+                                    " varp=" + debugVarp +
+                                    " value=" + register +
+                                    " text=" + iface.text +
+                                    " activeText=" + iface.activeText
+                    );
+                }
+            } else if (code == 6) { // load_next_level_xp {skill}
                     register = levelExperience[skillBaseLevel[script[pos++]] - 1];
                 } else if (code == 7) {
                     register = (varps[script[pos++]] * 100) / 46875;
@@ -12273,13 +12328,23 @@ public class Game extends GameShell {
     private void readIfSetText() {
         String text = in.readString();
         int interfaceID = in.readU16A();
+
         if ((interfaceID >= 0) && (interfaceID < IfType.instances.length)) {
             IfType iface = IfType.instances[interfaceID];
+
             if (iface != null) {
                 iface.text = text;
+
+                // Autocast selected spell text uses activeText when varp 108 script is active.
+                if (interfaceID == 352) {
+                    iface.activeText = text;
+                }
+
                 if (iface.parentID == tabInterfaceID[selectedTab]) {
                     redrawSidebar = true;
                 }
+
+                redrawSidebar = true;
             }
         }
     }
@@ -12387,6 +12452,16 @@ public class Game extends GameShell {
     private void readVarpLarge() {
         int varpID = in.readU16LE();
         int value = in.read32RME();
+
+        if (DEBUG_AUTOCAST_VARPS && (varpID == 43 || varpID == 108 || varpID < 300)) {
+            System.out.println(
+                    "[SERVER VARP_LARGE] id=" + varpID +
+                            " value=" + value +
+                            " old=" + varps[varpID] +
+                            " cacheOld=" + varCache[varpID]
+            );
+        }
+
         varCache[varpID] = value;
 
         if (varps[varpID] != value) {
@@ -12402,6 +12477,18 @@ public class Game extends GameShell {
     private void readVarpSmall() {
         int varpID = in.readU16LE();
         byte value = in.read8();
+        int intValue = value;
+
+        if (DEBUG_AUTOCAST_VARPS && (varpID == 43 || varpID == 108 || varpID < 300)) {
+            System.out.println(
+                    "[SERVER VARP_SMALL] id=" + varpID +
+                            " value=" + intValue +
+                            " unsigned=" + (value & 0xFF) +
+                            " old=" + varps[varpID] +
+                            " cacheOld=" + varCache[varpID]
+            );
+        }
+
         varCache[varpID] = value;
 
         if (varps[varpID] != value) {
