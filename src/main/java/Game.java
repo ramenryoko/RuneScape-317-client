@@ -2500,7 +2500,14 @@ public class Game extends GameShell {
                     projectFromGround(player, player.height + 15);
 
                     if (projectX > -1) {
-                        int prayerIcon = player.headicons - 1;
+                        int headIconFlags = player.headicons;
+                        boolean hasSkull = (headIconFlags & 0x40) != 0;
+                        int prayerIcon = (headIconFlags & 0x3F) - 1;
+
+                        if (hasSkull && imageHeadicons.length > 0 && imageHeadicons[0] != null) {
+                            imageHeadicons[0].draw(projectX - 12, projectY - y);
+                            y -= 25;
+                        }
 
                         if (prayerIcon >= 0 && prayerIcon < imagePrayerHeadicons.length && imagePrayerHeadicons[prayerIcon] != null) {
                             imagePrayerHeadicons[prayerIcon].draw(projectX - 12, projectY - y);
