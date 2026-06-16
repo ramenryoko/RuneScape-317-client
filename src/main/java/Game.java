@@ -939,6 +939,13 @@ public class Game extends GameShell {
                 for (int i = 0; i < 20; i++) {
                     imageHeadicons[i] = new Image24(archiveMedia, "headicons", i);
                 }
+            try {
+                imageHeadicons[0] = new Image24(archiveMedia, "headicons_pk", 0);
+                System.out.println("Loaded PK skull icon from headicons_pk[0]");
+            } catch (Exception ignoredPkSkull) {
+                System.out.println("Unable to load headicons_pk[0]; falling back to headicons[0]");
+            }
+
             } catch (Exception ignored) {
             }
             try {
@@ -12639,7 +12646,6 @@ private void drawViewportInterfaces() {
         scene.clearTemporaryLocs();
 
         draw2DEntityElements();
-        drawPatchedPlayerSkullOnlyHeadicons();
         drawChats();
         drawTileHint();
         updateTextures(cycle);
@@ -12721,44 +12727,4 @@ private void drawViewportInterfaces() {
     }
 
 
-    private void drawPatchedPlayerSkullOnlyHeadicons() {
-        for (int i = -1; i < playerCount; i++) {
-            int playerID = (i == -1) ? LOCAL_PLAYER_INDEX : playerIDs[i];
-            PlayerEntity player;
-
-            if (playerID == LOCAL_PLAYER_INDEX) {
-                player = localPlayer;
-            } else {
-                if (playerID < 0 || playerID >= players.length) {
-                    continue;
-                }
-                player = players[playerID];
-            }            if (player == null || !player.visible) {
-                continue;
-            }
-
-            int encoded = player.headicons & 0xFF;
-
-            if ((encoded & 0x40) == 0) {
-                continue;
-            }
-
-            int worldY = getHeightmapY(currentLevel, player.x, player.z) - player.height - 44;
-            project(player.x, worldY, player.z);
-            if (projectX == -1 || projectY == -1) {
-                continue;
-            }
-
-            int x = projectX - 12;
-            int y = projectY - 12;
-            if (imageHeadicons != null && imageHeadicons.length > 0 && imageHeadicons[0] != null) {
-                imageHeadicons[0].draw(x, y);
-            } else {
-                Draw2D.fillRect(projectX - 5, y + 2, 10, 10, 0x000000);
-                Draw2D.drawRect(projectX - 6, y + 1, 12, 12, 0xffffff);
-                Draw2D.drawLine(projectX - 4, y + 4, projectX + 4, y + 10, 0xffffff);
-                Draw2D.drawLine(projectX + 4, y + 4, projectX - 4, y + 10, 0xffffff);
-            }
-        }
-    }
 }
