@@ -9243,55 +9243,6 @@ public class Game extends GameShell {
         }
     }
 
-    private void drawPatchedPlayerHeadicons() {
-        for (int i = -1; i < playerCount; i++) {
-            int playerID = (i == -1) ? LOCAL_PLAYER_INDEX : playerIDs[i];
-            PlayerEntity player;
-
-            if (playerID == LOCAL_PLAYER_INDEX) {
-                player = localPlayer;
-            } else {
-                if (playerID < 0 || playerID >= players.length) {
-                    continue;
-                }
-                player = players[playerID];
-            }
-
-            if (player == null || !player.visible) {
-                continue;
-            }
-
-            int encoded = player.headicons & 0xFF;
-            boolean skulled = (encoded & 0x40) != 0;
-            int prayerIcon = encoded & 0x3F;
-
-            if (!skulled && prayerIcon <= 0) {
-                continue;
-            }
-
-            int worldY = getHeightmapY(currentLevel, player.x, player.z) - player.height - 20;
-            project(player.x, worldY, player.z);
-
-            if (projectX == -1 || projectY == -1) {
-                continue;
-            }
-
-            int y = projectY - 12;
-
-            if (skulled && imageHeadicons != null && imageHeadicons.length > 0 && imageHeadicons[0] != null) {
-                imageHeadicons[0].draw(projectX - 12, y);
-                y -= 25;
-            }
-
-            if (prayerIcon >= 1
-                    && imagePrayerHeadicons != null
-                    && prayerIcon <= imagePrayerHeadicons.length
-                    && imagePrayerHeadicons[prayerIcon - 1] != null) {
-                imagePrayerHeadicons[prayerIcon - 1].draw(projectX - 12, y);
-            }
-        }
-    }
-
 private void drawViewportInterfaces() {
         if (viewportOverlayInterfaceID != -1) {
             updateInterfaceAnimation(delta, viewportOverlayInterfaceID);
@@ -12688,7 +12639,7 @@ private void drawViewportInterfaces() {
         scene.clearTemporaryLocs();
 
         draw2DEntityElements();
-        drawPatchedPlayerHeadicons();
+        drawPatchedPlayerSkullOnlyHeadicons();
         drawChats();
         drawTileHint();
         updateTextures(cycle);
@@ -12769,4 +12720,45 @@ private void drawViewportInterfaces() {
         viewportInterfaceID = -1;
     }
 
+
+    private void drawPatchedPlayerSkullOnlyHeadicons() {
+        for (int i = -1; i < playerCount; i++) {
+            int playerID = (i == -1) ? LOCAL_PLAYER_INDEX : playerIDs[i];
+            PlayerEntity player;
+
+            if (playerID == LOCAL_PLAYER_INDEX) {
+                player = localPlayer;
+            } else {
+                if (playerID < 0 || playerID >= players.length) {
+                    continue;
+                }
+                player = players[playerID];
+            }            if (player == null || !player.visible) {
+                continue;
+            }
+
+            int encoded = player.headicons & 0xFF;
+
+            if ((encoded & 0x40) == 0) {
+                continue;
+            }
+
+            int worldY = getHeightmapY(currentLevel, player.x, player.z) - player.height - 44;
+            project(player.x, worldY, player.z);
+            if (projectX == -1 || projectY == -1) {
+                continue;
+            }
+
+            int x = projectX - 12;
+            int y = projectY - 12;
+            if (imageHeadicons != null && imageHeadicons.length > 0 && imageHeadicons[0] != null) {
+                imageHeadicons[0].draw(x, y);
+            } else {
+                Draw2D.fillRect(projectX - 5, y + 2, 10, 10, 0x000000);
+                Draw2D.drawRect(projectX - 6, y + 1, 12, 12, 0xffffff);
+                Draw2D.drawLine(projectX - 4, y + 4, projectX + 4, y + 10, 0xffffff);
+                Draw2D.drawLine(projectX + 4, y + 4, projectX - 4, y + 10, 0xffffff);
+            }
+        }
+    }
 }
