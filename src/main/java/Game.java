@@ -670,6 +670,27 @@ public class Game extends GameShell {
     public Game() {
     }
 
+    private Image24 loadPkHeadiconSprite(FileArchive archiveMedia, int index) {
+        String[] archiveNames = {"headicons_pk", "headicons"};
+
+        for (String archiveName : archiveNames) {
+            try {
+                return new Image24(archiveMedia, archiveName, index);
+            } catch (Exception ignored) {
+            }
+        }
+
+        return null;
+    }
+
+    private void drawFallbackSkullMarker(int x, int y) {
+        Draw2D.fillRect(x, y, 14, 14, 0xffffff);
+        Draw2D.drawRect(x, y, 14, 14, 0);
+        Draw2D.fillRect(x + 3, y + 4, 3, 3, 0);
+        Draw2D.fillRect(x + 8, y + 4, 3, 3, 0);
+        Draw2D.drawLineX(x + 4, y + 10, 6, 0);
+    }
+
     @Override
     public void run() {
         if (flamesThread) {
@@ -937,7 +958,8 @@ public class Game extends GameShell {
             }
             try {
                 for (int i = 0; i < 20; i++) {
-                    imageHeadicons[i] = new Image24(archiveMedia, "headicons", i);
+                    imageHeadicons[i] = loadPkHeadiconSprite(archiveMedia, i);
+                    System.out.println("Loaded headicons[" + i + "]");
                 }
             try {
                 imageHeadicons[0] = new Image24(archiveMedia, "headicons_pk", 0);
@@ -946,7 +968,8 @@ public class Game extends GameShell {
                 System.out.println("Unable to load headicons_pk[0]; falling back to headicons[0]");
             }
 
-            } catch (Exception ignored) {
+            } catch (Exception ex) {
+                System.out.println("Unable to load headicons from media archive: " + ex);
             }
             try {
                 for (int i = 0; i < 6; i++) {
@@ -2507,18 +2530,23 @@ public class Game extends GameShell {
                     projectFromGround(player, player.height + 15);
 
                     if (projectX > -1) {
-                        int headIconFlags = player.headicons;
+                        int headIconFlags = player.headicons & 0xFF;
                         boolean hasSkull = (headIconFlags & 0x40) != 0;
                         int prayerIcon = (headIconFlags & 0x3F) - 1;
 
-                        if (hasSkull && imageHeadicons.length > 0 && imageHeadicons[0] != null) {
-                            imageHeadicons[0].draw(projectX - 12, projectY - y);
-                            y -= 25;
-                        }
-
+                        // Stack upward from the player's head. Prayer sits lower, skull sits above it.
                         if (prayerIcon >= 0 && prayerIcon < imagePrayerHeadicons.length && imagePrayerHeadicons[prayerIcon] != null) {
                             imagePrayerHeadicons[prayerIcon].draw(projectX - 12, projectY - y);
-                            y -= 25;
+                            y += 25;
+                        }
+
+                        if (hasSkull) {
+                            if (imageHeadicons.length > 0 && imageHeadicons[0] != null) {
+                                imageHeadicons[0].draw(projectX - 12, projectY - y);
+                            } else {
+                                drawFallbackSkullMarker(projectX - 7, projectY - y + 2);
+                            }
+                            y += 25;
                         }
                     }
                 }
