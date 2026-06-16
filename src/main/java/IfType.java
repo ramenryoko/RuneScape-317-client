@@ -429,5 +429,137 @@ public class IfType {
         model.calculateNormals(64, 768, -50, -10, -50, true);
         return model;
     }
+    public static void dumpInterfaceTree(int parentId) {
+        if (instances == null) {
+            System.out.println("IfType.instances is null. Interfaces are not unpacked yet.");
+            return;
+        }
 
+        if (parentId < 0 || parentId >= instances.length || instances[parentId] == null) {
+            System.out.println("Interface " + parentId + " is null or out of range.");
+            return;
+        }
+
+        System.out.println();
+        System.out.println("========== INTERFACE TREE DUMP: " + parentId + " ==========");
+        dumpInterfaceRecursive(parentId, 0, 0, 0);
+        System.out.println("==================================================");
+        System.out.println();
+    }
+
+    private static void dumpInterfaceRecursive(int interfaceId, int depth, int absX, int absY) {
+        if (interfaceId < 0 || interfaceId >= instances.length) {
+            System.out.println(indent(depth) + "id=" + interfaceId + " OUT_OF_RANGE");
+            return;
+        }
+
+        IfType iface = instances[interfaceId];
+
+        if (iface == null) {
+            System.out.println(indent(depth) + "id=" + interfaceId + " NULL");
+            return;
+        }
+
+        int x = absX + iface.x;
+        int y = absY + iface.y;
+
+        StringBuilder line = new StringBuilder();
+
+        line.append(indent(depth));
+        line.append("id=").append(interfaceId);
+        line.append(" parent=").append(iface.parentID);
+        line.append(" type=").append(iface.type).append("(").append(typeName(iface.type)).append(")");
+        line.append(" optionType=").append(iface.optionType);
+        line.append(" contentType=").append(iface.contentType);
+        line.append(" size=").append(iface.width).append("x").append(iface.height);
+        line.append(" pos=(").append(x).append(",").append(y).append(")");
+
+        if (iface.type == TYPE_MODEL) {
+            line.append(" MODEL");
+            line.append(" modelType=").append(iface.modelType);
+            line.append(" modelID=").append(iface.modelID);
+            line.append(" activeModelType=").append(iface.activeModelType);
+            line.append(" activeModelID=").append(iface.activeModelID);
+            line.append(" zoom=").append(iface.modelZoom);
+            line.append(" pitch=").append(iface.modelPitch);
+            line.append(" yaw=").append(iface.modelYaw);
+        }
+
+        if (iface.type == TYPE_TEXT || iface.type == TYPE_UNUSED || iface.type == TYPE_INVENTORY_TEXT) {
+            line.append(" TEXT");
+            line.append(" text=\"").append(safeText(iface.text)).append("\"");
+            line.append(" activeText=\"").append(safeText(iface.activeText)).append("\"");
+            line.append(" option=\"").append(safeText(iface.option)).append("\"");
+        }
+
+        if (iface.type == TYPE_INVENTORY || iface.type == TYPE_INVENTORY_TEXT) {
+            line.append(" INVENTORY");
+            line.append(" margin=(").append(iface.inventoryMarginX).append(",").append(iface.inventoryMarginY).append(")");
+        }
+
+        System.out.println(line.toString());
+
+        if (iface.childID == null) {
+            return;
+        }
+
+        for (int i = 0; i < iface.childID.length; i++) {
+            int childId = iface.childID[i];
+            int childX = iface.childX[i];
+            int childY = iface.childY[i];
+
+            System.out.println(
+                    indent(depth)
+                            + "  childIndex=" + i
+                            + " childId=" + childId
+                            + " local=(" + childX + "," + childY + ")"
+            );
+
+            dumpInterfaceRecursive(childId, depth + 1, absX + childX, absY + childY);
+        }
+    }
+
+    private static String typeName(int type) {
+        switch (type) {
+            case TYPE_PARENT:
+                return "PARENT";
+            case TYPE_UNUSED:
+                return "UNUSED";
+            case TYPE_INVENTORY:
+                return "INVENTORY";
+            case TYPE_RECT:
+                return "RECT";
+            case TYPE_TEXT:
+                return "TEXT";
+            case TYPE_IMAGE:
+                return "IMAGE";
+            case TYPE_MODEL:
+                return "MODEL";
+            case TYPE_INVENTORY_TEXT:
+                return "INVENTORY_TEXT";
+            default:
+                return "UNKNOWN";
+        }
+    }
+
+    private static String safeText(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+    }
+
+    private static String indent(int depth) {
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < depth; i++) {
+            builder.append("  ");
+        }
+
+        return builder.toString();
+    }
 }

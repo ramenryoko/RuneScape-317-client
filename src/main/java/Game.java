@@ -20,7 +20,7 @@ import java.util.zip.CRC32;
 
 public class Game extends GameShell {
 
-    private static final boolean DEBUG_AUTOCAST_VARPS = true;
+    private static final boolean DEBUG_AUTOCAST_VARPS = false;
     public static final int[][] designPartColor = {{6798, 107, 10283, 16, 4797, 7744, 5799, 4634, 33697, 22433, 2983, 54193}, {8741, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003, 25239}, {25238, 8742, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003}, {4626, 11146, 6439, 12, 4758, 10270}, {4550, 4537, 5681, 5673, 5790, 6806, 8076, 4574}};
     public static final int[] designHairColor = {9104, 10275, 7595, 3610, 7975, 8526, 918, 38802, 24466, 10145, 58654, 5027, 1457, 16565, 34991, 25486};
     public static final BigInteger RSA_MODULUS = new BigInteger("7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789");
@@ -2494,8 +2494,10 @@ public class Game extends GameShell {
                     if (projectX > -1) {
                         for (int icon = 0; icon < 8; icon++) {
                             if ((player.headicons & (1 << icon)) != 0) {
-                                imageHeadicons[icon].draw(projectX - 12, projectY - y);
-                                y -= 25;
+                                if (icon >= 0 && icon < imageHeadicons.length && imageHeadicons[icon] != null) {
+                                    imageHeadicons[icon].draw(projectX - 12, projectY - y);
+                                    y -= 25;
+                                }
                             }
                         }
                     }
@@ -2505,7 +2507,9 @@ public class Game extends GameShell {
                     projectFromGround(player, player.height + 15);
 
                     if (projectX > -1) {
-                        imageHeadicons[7].draw(projectX - 12, projectY - y);
+                        if (imageHeadicons.length > 7 && imageHeadicons[7] != null) {
+                            imageHeadicons[7].draw(projectX - 12, projectY - y);
+                        }
                     }
                 }
             } else {
@@ -2515,13 +2519,17 @@ public class Game extends GameShell {
                     projectFromGround(entity, entity.height + 15);
 
                     if (projectX > -1) {
-                        imageHeadicons[type.headicon].draw(projectX - 12, projectY - 30);
+                        if (imageHeadicons[type.headicon] != null) {
+                            imageHeadicons[type.headicon].draw(projectX - 12, projectY - 30);
+                        }
                     }
                 }
                 if ((hintType == 1) && (hintNPC == npcIDs[index - playerCount]) && ((loopCycle % 20) < 10)) {
                     projectFromGround(entity, entity.height + 15);
                     if (projectX > -1) {
-                        imageHeadicons[2].draw(projectX - 12, projectY - 28);
+                        if (imageHeadicons.length > 2 && imageHeadicons[2] != null) {
+                            imageHeadicons[2].draw(projectX - 12, projectY - 28);
+                        }
                     }
                 }
             }
@@ -6062,6 +6070,9 @@ public class Game extends GameShell {
                             }
                         }
                     }
+                }
+                if (chatTyped.equals("::dump")) {
+                    IfType.dumpInterfaceTree(11462);
                 }
             }
 
@@ -10474,16 +10485,16 @@ public class Game extends GameShell {
             fontBold12.drawStringTaggableCenter("Create a free account", w / 2, (h / 2) - 60, 0xffff00, true);
 
             int y = (h / 2) - 35;
-            fontBold12.drawStringTaggableCenter("To create a new account you need to", w / 2, y, 0xffffff, true);
+            fontBold12.drawStringTaggableCenter("To create a new account, simply", w / 2, y, 0xffffff, true);
             y += 15;
 
-            fontBold12.drawStringTaggableCenter("go back to the main RuneScape webpage", w / 2, y, 0xffffff, true);
+            fontBold12.drawStringTaggableCenter("log in with your desired username", w / 2, y, 0xffffff, true);
             y += 15;
 
-            fontBold12.drawStringTaggableCenter("and choose the red 'create account'", w / 2, y, 0xffffff, true);
+            fontBold12.drawStringTaggableCenter("and password and your account", w / 2, y, 0xffffff, true);
             y += 15;
 
-            fontBold12.drawStringTaggableCenter("button at the top right of that page.", w / 2, y, 0xffffff, true);
+            fontBold12.drawStringTaggableCenter("will automatically be created.", w / 2, y, 0xffffff, true);
 
             int x = w / 2;
             y = (h / 2) + 50;
@@ -11320,7 +11331,7 @@ public class Game extends GameShell {
                     readIfViewportOverlay();
                     break;
 
-                case PacketIn.MINIMAP_TOGGLE:
+                case PacketIn.MINIMAP_TOGGLE: //99
                     minimapState = in.readU8();
                     break;
 
