@@ -461,6 +461,7 @@ public class Game extends GameShell {
     public int[] menuAction = new int[500];
     public int[] menuParamC = new int[500];
     public Image24[] imageHeadicons = new Image24[20];
+    public Image24[] imagePrayerHeadicons = new Image24[6];
 
     public boolean redrawSideicons = false;
     public int systemUpdateTimer;
@@ -939,6 +940,13 @@ public class Game extends GameShell {
                     imageHeadicons[i] = new Image24(archiveMedia, "headicons", i);
                 }
             } catch (Exception ignored) {
+            }
+            try {
+                for (int i = 0; i < 6; i++) {
+                    imagePrayerHeadicons[i] = new Image24(archiveMedia, "headicons_prayer", i);
+                }
+            } catch (Exception ex) {
+                System.out.println("Unable to load headicons_prayer from media archive: " + ex);
             }
             imageMapmarker0 = new Image24(archiveMedia, "mapmarker", 0);
             imageMapmarker1 = new Image24(archiveMedia, "mapmarker", 1);
@@ -2492,13 +2500,11 @@ public class Game extends GameShell {
                     projectFromGround(player, player.height + 15);
 
                     if (projectX > -1) {
-                        for (int icon = 0; icon < 8; icon++) {
-                            if ((player.headicons & (1 << icon)) != 0) {
-                                if (icon >= 0 && icon < imageHeadicons.length && imageHeadicons[icon] != null) {
-                                    imageHeadicons[icon].draw(projectX - 12, projectY - y);
-                                    y -= 25;
-                                }
-                            }
+                        int prayerIcon = player.headicons - 1;
+
+                        if (prayerIcon >= 0 && prayerIcon < imagePrayerHeadicons.length && imagePrayerHeadicons[prayerIcon] != null) {
+                            imagePrayerHeadicons[prayerIcon].draw(projectX - 12, projectY - y);
+                            y -= 25;
                         }
                     }
                 }
@@ -9230,7 +9236,7 @@ public class Game extends GameShell {
         }
     }
 
-    private void drawViewportInterfaces() {
+private void drawViewportInterfaces() {
         if (viewportOverlayInterfaceID != -1) {
             updateInterfaceAnimation(delta, viewportOverlayInterfaceID);
             drawParentInterface(IfType.instances[viewportOverlayInterfaceID], 0, 0, 0);
