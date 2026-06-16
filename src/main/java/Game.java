@@ -959,13 +959,13 @@ public class Game extends GameShell {
             try {
                 for (int i = 0; i < 20; i++) {
                     imageHeadicons[i] = loadPkHeadiconSprite(archiveMedia, i);
-                    System.out.println("Loaded headicons[" + i + "]");
+                    //System.out.println("Loaded headicons[" + i + "]");
                 }
             try {
                 imageHeadicons[0] = new Image24(archiveMedia, "headicons_pk", 0);
-                System.out.println("Loaded PK skull icon from headicons_pk[0]");
+                //System.out.println("Loaded PK skull icon from headicons_pk[0]");
             } catch (Exception ignoredPkSkull) {
-                System.out.println("Unable to load headicons_pk[0]; falling back to headicons[0]");
+                //System.out.println("Unable to load headicons_pk[0]; falling back to headicons[0]");
             }
 
             } catch (Exception ex) {
@@ -3516,7 +3516,7 @@ public class Game extends GameShell {
                     chatBuffer.position = 0;
 
                     String chat = ChatCompression.unpack(length, chatBuffer);
-                    chat = Censor.filter(chat);
+                    chat = chat; //Censor.filter(chat);
 
                     player.chat = chat;
                     player.chatColor = colorStyle >> 8;
@@ -6200,7 +6200,7 @@ public class Game extends GameShell {
                 out.writeA(chatBuffer.data, 0, chatBuffer.position);
                 out.writeSize(out.position - startPosition);
                 chatTyped = ChatCompression.format(chatTyped);
-                chatTyped = Censor.filter(chatTyped);
+                chatTyped = chatTyped; // Censor.filter(chatTyped);
                 localPlayer.chat = chatTyped;
                 localPlayer.chatColor = color;
                 localPlayer.chatStyle = style;
@@ -6303,7 +6303,7 @@ public class Game extends GameShell {
                 ChatCompression.pack(socialInput, out);
                 out.writeSize(out.position - start);
                 socialInput = ChatCompression.format(socialInput);
-                socialInput = Censor.filter(socialInput);
+                socialInput = socialInput; // Censor.filter(socialInput);
                 addMessage(6, StringUtil.formatName(StringUtil.fromBase37(inputFriendName37)), socialInput);
                 if (privateChatSetting == 2) {
                     privateChatSetting = 1;
@@ -12327,7 +12327,7 @@ private void drawViewportInterfaces() {
                 String message = ChatCompression.unpack(packetSize - 13, in);
 
                 if (role != 3) {
-                    message = Censor.filter(message);
+                    message = message; //Censor.filter(message);
                 }
 
                 if ((role == 2) || (role == 3)) {
