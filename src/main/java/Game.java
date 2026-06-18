@@ -9835,11 +9835,10 @@ private void drawViewportInterfaces() {
         }
     }
 
-    public void midivol(boolean active, int vol) {
-        Signlink.midivol = vol;
-        if (active) {
-            Signlink.midi = "voladjust";
-        }
+        public void midivol(boolean active, int vol) {
+        // Apply MIDI volume only. Do not set // removed: volume adjustment must not restart MIDI
+        // that causes the signlink thread to reload/restart the song.
+        Signlink.setMidiVolumeLegacy(vol);
     }
 
     public int executeClientscript1(IfType iface, int scriptId) {

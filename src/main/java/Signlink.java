@@ -42,6 +42,23 @@ public class Signlink implements Runnable {
     private static Sequencer midiSequencer = null;
     private static Clip waveClip = null;
 
+    public static synchronized void setMidiVolumeLegacy(int legacyVolume) {
+        midivol = legacyVolume;
+        setMidiVolumeLevel(legacyVolumeToLevel(legacyVolume));
+    }
+
+    public static synchronized void setWaveVolumeLegacy(int legacyVolume) {
+        wavevol = legacyVolume;
+        setWaveVolumeLevel(legacyVolumeToLevel(legacyVolume));
+    }
+
+    private static int legacyVolumeToLevel(int legacyVolume) {
+        if (legacyVolume <= -1200) return 1;
+        if (legacyVolume <= -800) return 2;
+        if (legacyVolume <= -400) return 3;
+        return 4;
+    }
+
     public static void startpriv() {
         threadliveid = (int) (Math.random() * 99999999D);
 
