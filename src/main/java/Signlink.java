@@ -14,6 +14,11 @@ import java.net.InetAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.sound.midi.MidiChannel;
+import javax.sound.midi.Receiver;
+import javax.sound.midi.Synthesizer;
+import javax.sound.midi.Transmitter;
+import javax.sound.sampled.FloatControl;
 
 public class Signlink implements Runnable {
 
@@ -41,6 +46,11 @@ public class Signlink implements Runnable {
 
     private static Sequencer midiSequencer = null;
     private static Clip waveClip = null;
+    private static Synthesizer midiSynthesizer = null;
+    private static Transmitter midiTransmitter = null;
+    private static Receiver midiReceiver = null;
+    private static int midiVolumeLevel = 4;
+    private static int waveVolumeLevel = 4;
 
     public static synchronized void setMidiVolumeLegacy(int legacyVolume) {
         midivol = legacyVolume;
@@ -57,6 +67,113 @@ public class Signlink implements Runnable {
         if (legacyVolume <= -800) return 2;
         if (legacyVolume <= -400) return 3;
         return 4;
+    }
+
+    private static int clampVolumeLevel(int level) {
+        if (level < 0) return 0;
+        if (level > 4) return 4;
+        return level;
+    }
+
+    public static int getMidiVolumeLevel() {
+        return midiVolumeLevel;
+    }
+
+    public static int getWaveVolumeLevel() {
+        return waveVolumeLevel;
+    }
+
+    private static int midiVolumeLevelToLegacy(int level) {
+        level = clampVolumeLevel(level);
+        if (level <= 0) return -1200;
+        return -400 * (4 - level);
+    }
+
+    private static int midiControllerVolume(int level) {
+        level = clampVolumeLevel(level);
+        if (level <= 0) return 0;
+        return Math.max(1, Math.min(127, (int) Math.round(127.0D * ((double) level / 4.0D))));
+    }
+
+    private static synchronized void applyMidiVolume() {
+        if (midiSynthesizer == null) {
+            return;
+        }
+
+        try {
+            int midiVolume = midiControllerVolume(midiVolumeLevel);
+            MidiChannel[] channels = midiSynthesizer.getChannels();
+
+            if (channels == null) {
+                return;
+            }
+
+            for (MidiChannel channel : channels) {
+                if (channel != null) {
+                    channel.controlChange(7, midiVolume);
+                    channel.controlChange(39, 0);
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[MIDI] failed to apply volume");
+            e.printStackTrace();
+        }
+    }
+
+    private static void applyClipGain(Clip clip) {
+        if (clip == null) {
+            return;
+        }
+
+        try {
+            if (!clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                return;
+            }
+
+            FloatControl gain = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+            float value;
+
+            if (waveVolumeLevel <= 0) {
+                value = gain.getMinimum();
+            } else {
+                value = (float) (20.0D * Math.log10((double) waveVolumeLevel / 4.0D));
+            }
+
+            if (value < gain.getMinimum()) value = gain.getMinimum();
+            if (value > gain.getMaximum()) value = gain.getMaximum();
+
+            gain.setValue(value);
+        } catch (Exception e) {
+            System.out.println("[WAVE] failed to apply volume");
+            e.printStackTrace();
+        }
+    }
+
+    public static synchronized void setMidiVolumeLevel(int level) {
+        midiVolumeLevel = clampVolumeLevel(level);
+        midivol = midiVolumeLevelToLegacy(midiVolumeLevel);
+
+        if (midiVolumeLevel <= 0) {
+            applyMidiVolume();
+            stopMidi();
+            return;
+        }
+
+        applyMidiVolume();
+    }
+
+    public static synchronized void setWaveVolumeLevel(int level) {
+        waveVolumeLevel = clampVolumeLevel(level);
+        wavevol = midiVolumeLevelToLegacy(waveVolumeLevel);
+
+        if (waveVolumeLevel <= 0) {
+            stopWave();
+            return;
+        }
+
+        if (waveClip != null) {
+            applyClipGain(waveClip);
+        }
     }
 
     public static void startpriv() {
@@ -204,12 +321,27 @@ public class Signlink implements Runnable {
         }
     }
 
-    public static synchronized void stopMidi() {
+        public static synchronized void stopMidi() {
         try {
             if (midiSequencer != null) {
                 midiSequencer.stop();
                 midiSequencer.close();
                 midiSequencer = null;
+            }
+
+            if (midiTransmitter != null) {
+                midiTransmitter.close();
+                midiTransmitter = null;
+            }
+
+            if (midiReceiver != null) {
+                midiReceiver.close();
+                midiReceiver = null;
+            }
+
+            if (midiSynthesizer != null) {
+                midiSynthesizer.close();
+                midiSynthesizer = null;
             }
         } catch (Exception e) {
             System.out.println("[MIDI] failed to stop midi");
@@ -217,9 +349,14 @@ public class Signlink implements Runnable {
         }
     }
 
-    public static synchronized void playMidi(String path) {
+        public static synchronized void playMidi(String path) {
         try {
             stopMidi();
+
+            if (midiVolumeLevel <= 0) {
+                System.out.println("[MIDI] suppressed because music volume is Off");
+                return;
+            }
 
             File midiFile = new File(path);
             if (!midiFile.exists()) {
@@ -232,21 +369,52 @@ public class Signlink implements Runnable {
                 return;
             }
 
-            midiSequencer = MidiSystem.getSequencer();
-
-            if (midiSequencer == null) {
-                System.out.println("[MIDI] no MIDI sequencer available");
-                return;
-            }
-
             Sequence sequence = MidiSystem.getSequence(midiFile);
 
-            midiSequencer.open();
+            try {
+                midiSequencer = MidiSystem.getSequencer(false);
+                midiSynthesizer = MidiSystem.getSynthesizer();
+
+                midiSynthesizer.open();
+                midiReceiver = midiSynthesizer.getReceiver();
+
+                midiSequencer.open();
+                midiTransmitter = midiSequencer.getTransmitter();
+                midiTransmitter.setReceiver(midiReceiver);
+            } catch (Exception synthException) {
+                System.out.println("[MIDI] custom synth path failed; using default sequencer");
+
+                if (midiTransmitter != null) {
+                    midiTransmitter.close();
+                    midiTransmitter = null;
+                }
+
+                if (midiReceiver != null) {
+                    midiReceiver.close();
+                    midiReceiver = null;
+                }
+
+                if (midiSynthesizer != null) {
+                    midiSynthesizer.close();
+                    midiSynthesizer = null;
+                }
+
+                midiSequencer = MidiSystem.getSequencer();
+
+                if (midiSequencer == null) {
+                    System.out.println("[MIDI] no MIDI sequencer available");
+                    return;
+                }
+
+                midiSequencer.open();
+            }
+
             midiSequencer.setSequence(sequence);
             midiSequencer.setLoopCount(Sequencer.LOOP_CONTINUOUSLY);
+            applyMidiVolume();
             midiSequencer.start();
 
-            System.out.println("[MIDI] playing midi: " + path + " size=" + midiFile.length());
+            System.out.println("[MIDI] playing midi: " + path + " size=" + midiFile.length() + " volumeLevel=" + midiVolumeLevel);
         } catch (Exception e) {
             System.out.println("[MIDI] failed to play midi: " + path);
             e.printStackTrace();
@@ -266,9 +434,14 @@ public class Signlink implements Runnable {
         }
     }
 
-    public static synchronized void playWave(String path) {
+        public static synchronized void playWave(String path) {
         try {
             stopWave();
+
+            if (waveVolumeLevel <= 0) {
+                System.out.println("[WAVE] suppressed because sound effect volume is Off");
+                return;
+            }
 
             File waveFile = new File(path);
             if (!waveFile.exists()) {
@@ -284,9 +457,10 @@ public class Signlink implements Runnable {
             AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(waveFile);
             waveClip = AudioSystem.getClip();
             waveClip.open(audioInputStream);
+            applyClipGain(waveClip);
             waveClip.start();
 
-            System.out.println("[WAVE] playing wave: " + path + " size=" + waveFile.length());
+            System.out.println("[WAVE] playing wave: " + path + " size=" + waveFile.length() + " volumeLevel=" + waveVolumeLevel);
         } catch (Exception e) {
             System.out.println("[WAVE] failed to play wave: " + path);
             e.printStackTrace();
