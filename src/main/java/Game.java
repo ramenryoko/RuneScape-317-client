@@ -20,7 +20,11 @@ import java.util.zip.CRC32;
 
 public class Game extends GameShell {
 
+    public static boolean DEBUG_DUMP_MUSIC_LINE_DATA = false;
+    public static boolean DEFAULT_MUSIC_LINES_RED_ON_STARTUP = false;
     private static final boolean DEBUG_AUTOCAST_VARPS = false;
+    public static boolean DEBUG_VARP_CLICK_IDS = false;
+    public static boolean DEBUG_VARP_CLICK_SCAN_SIBLINGS = false;
     public static final int[][] designPartColor = {{6798, 107, 10283, 16, 4797, 7744, 5799, 4634, 33697, 22433, 2983, 54193}, {8741, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003, 25239}, {25238, 8742, 12, 64030, 43162, 7735, 8404, 1701, 38430, 24094, 10153, 56621, 4783, 1341, 16578, 35003}, {4626, 11146, 6439, 12, 4758, 10270}, {4550, 4537, 5681, 5673, 5790, 6806, 8076, 4574}};
     public static final int[] designHairColor = {9104, 10275, 7595, 3610, 7975, 8526, 918, 38802, 24466, 10145, 58654, 5027, 1457, 16565, 34991, 25486};
     public static final BigInteger RSA_MODULUS = new BigInteger("7162900525229798032761816791230527296329313291232324290237849263501208207972894053929065636522363163621000728841182238772712427862772219676577293600221789");
@@ -123,6 +127,208 @@ public class Game extends GameShell {
         Game game = new Game();
         game.init(765, 503);
     }
+
+    private static final String[] MUSIC_LINE_DUMP_TRACK_NAMES = {
+            "Scape Main",
+            "Iban",
+            "Autumn Voyage",
+            "Unknown Land",
+            "Hells Bells",
+            "Sad Meadow",
+            "Jolly-R",
+            "Overture",
+            "Wildwood",
+            "Kingdom",
+            "Moody",
+            "Spooky 2",
+            "Long Way Home",
+            "Mage Arena",
+            "Witching",
+            "Workshop",
+            "Escape",
+            "Horizon",
+            "Arabique",
+            "Lullaby",
+            "Monarch Waltz",
+            "Gnome King",
+            "Gnome",
+            "Attack 1",
+            "Attack 2",
+            "Attack 3",
+            "Attack 4",
+            "Attack 5",
+            "Attack 6",
+            "Voodoo Cult",
+            "Game Intro 1",
+            "Voyage",
+            "Gnome Village",
+            "Wonder",
+            "Sea Shanty 2",
+            "Arabian",
+            "Deep Wildy",
+            "Trawler",
+            "Organ Music 1",
+            "Organ Music 2",
+            "Expecting",
+            "Wilderness 2",
+            "Wilderness 3",
+            "Wilderness 4",
+            "Venture 2",
+            "Harmony 2",
+            "Duel Arena",
+            "Morytania",
+            "Wander",
+            "Al Kharid",
+            "Trawler Minor",
+            "Serene",
+            "Royale",
+            "Scape Soft",
+            "High Seas",
+            "Doorways",
+            "Rune Essence",
+            "Nomad",
+            "Cursed",
+            "Lasting",
+            "Village",
+            "Newbie Melody",
+            "Chain of Command",
+            "Book of Spells",
+            "Miracle Dance",
+            "Legion",
+            "Close Quarters",
+            "Cavern",
+            "Egypt",
+            "Upcoming",
+            "Chompy Hunt",
+            "Fanfare",
+            "Lightwalk",
+            "Venture",
+            "Harmony",
+            "Splendour",
+            "Reggae",
+            "The Desert",
+            "Soundscape",
+            "Wondrous",
+            "Waterfall",
+            "Big Chords",
+            "Dead Quiet",
+            "Vision",
+            "Ice Melody",
+            "Twilight",
+            "Reggae 2",
+            "Ambient Jungle",
+            "Riverside",
+            "Sea Shanty",
+            "Parade",
+            "Tribal 2",
+            "Intrepid",
+            "Inspiration",
+            "Hermit",
+            "Forever",
+            "Baroque",
+            "Beyond",
+            "Gnome Village 2",
+            "Alone",
+            "Oriental",
+            "Camelot",
+            "Tomorrow",
+            "Expanse",
+            "Miles Away",
+            "Starlight",
+            "Theme",
+            "Serenade",
+            "Still Night",
+            "Gnomeball",
+            "Lightness",
+            "Jungly 1",
+            "Jungly 2",
+            "Greatness",
+            "Jungly 3",
+            "Faerie",
+            "Fishing",
+            "Shining",
+            "Forbidden",
+            "Shine",
+            "Arabian 2",
+            "Arabian 3",
+            "Garden",
+            "Nightfall",
+            "Grumpy",
+            "Spooky Jungle",
+            "Tree Spirits",
+            "Understanding",
+            "Breeze",
+            "The Tower",
+            "La Mort",
+            "Ambience 2",
+            "Ambience 3",
+            "Ambience 4",
+            "Emperor",
+            "Fade Test",
+            "Talking Forest",
+            "Barbarianism",
+            "Complication",
+            "Down to Earth",
+            "Scape Cave",
+            "Yesteryear",
+            "Zealot",
+            "Emotion",
+            "Principality",
+            "Gnome Theme",
+            "Start",
+            "Ballad of Enchantment",
+            "Expedition",
+            "Bone Dance",
+            "Neverland",
+            "Mausoleum",
+            "Medieval",
+            "Quest",
+            "Gaol",
+            "Army of Darkness",
+            "Long Ago",
+            "Tribal Background",
+            "Flute Salad",
+            "Landlubber",
+            "Tribal",
+            "Fanfare 2",
+            "Fanfare 3",
+            "Lonesome",
+            "Crystal Sword",
+            "The Shadow",
+            "Jungle Island",
+            "Dunjun",
+            "Desert Voyage",
+            "Spirit",
+            "Undercurrent",
+            "Adventure",
+            "Courage",
+            "Underground",
+            "Attention",
+            "Crystal Cave",
+            "Dangerous",
+            "Troubled",
+            "Magical Journey",
+            "Magic Dance",
+            "Arrival",
+            "Tremble",
+            "In the Manor",
+            "Wolf Mountain",
+            "Heart and Mind",
+            "Knightly",
+            "Trinity",
+            "Mellow",
+            "Stagnant",
+            "Time Out",
+            "Stratosphere",
+            "Waterlogged",
+            "Natural",
+            "Grotto",
+            "Artistry",
+            "Aztec",
+            "Forest",
+            "Elven Mist",
+            "Lost Soul"
+    };
 
     public static String getCombatLevelColorTag(int viewerLevel, int otherLevel) {
         int diff = viewerLevel - otherLevel;
@@ -1059,6 +1265,7 @@ public class Game extends GameShell {
 
             drawProgress(95, "Unpacking interfaces");
             IfType.unpack(archiveInterface, new BitmapFont[]{fontPlain11, fontPlain12, fontBold12, fontQuill8}, archiveMedia);
+            dumpMusicSidebarLineDataAndDefaultRed();
 
             drawProgress(100, "Preparing game engine");
 
@@ -1126,6 +1333,145 @@ public class Game extends GameShell {
             exception.printStackTrace();
         }
         errorLoading = true;
+    }
+
+    private String normalizeMusicLineDumpText(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .replaceAll("@[a-zA-Z0-9]{3}@", "")
+                .toLowerCase()
+                .replaceAll("[^a-z0-9]+", " ")
+                .trim();
+    }
+
+    private boolean isKnownMusicLineText(String value) {
+        String normalized = normalizeMusicLineDumpText(value);
+
+        if (normalized.length() == 0) {
+            return false;
+        }
+
+        for (String trackName : MUSIC_LINE_DUMP_TRACK_NAMES) {
+            if (normalized.equals(normalizeMusicLineDumpText(trackName))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private String csvMusicDumpValue(String value) {
+        if (value == null) {
+            value = "";
+        }
+
+        return "\"" + value.replace("\\", "\\\\").replace("\"", "\"\"") + "\"";
+    }
+
+    private int findMusicDumpChildIndex(IfType iface) {
+        if (iface == null || IfType.instances == null) {
+            return -1;
+        }
+
+        if (iface.parentID < 0 || iface.parentID >= IfType.instances.length) {
+            return -1;
+        }
+
+        IfType parent = IfType.instances[iface.parentID];
+
+        if (parent == null || parent.childID == null) {
+            return -1;
+        }
+
+        for (int i = 0; i < parent.childID.length; i++) {
+            if (parent.childID[i] == iface.id) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private void dumpMusicSidebarLineDataAndDefaultRed() {
+        if (!DEBUG_DUMP_MUSIC_LINE_DATA && !DEFAULT_MUSIC_LINES_RED_ON_STARTUP) {
+            return;
+        }
+
+        int matched = 0;
+
+        try {
+            java.io.PrintWriter writer = null;
+
+            if (DEBUG_DUMP_MUSIC_LINE_DATA) {
+                writer = new java.io.PrintWriter(new java.io.FileWriter("music_interface_lines_dump.csv"));
+                writer.println("id,parentID,childIndex,type,optionType,contentType,color,activeColor,hoverColor,x,y,width,height,text,activeText,option");
+            }
+
+            if (IfType.instances != null) {
+                for (int id = 0; id < IfType.instances.length; id++) {
+                    IfType iface = IfType.instances[id];
+
+                    if (iface == null) {
+                        continue;
+                    }
+
+                    boolean isMusicLine = isKnownMusicLineText(iface.text) || isKnownMusicLineText(iface.activeText);
+
+                    if (!isMusicLine) {
+                        continue;
+                    }
+
+                    matched++;
+
+                    if (DEFAULT_MUSIC_LINES_RED_ON_STARTUP) {
+                        iface.color = 0xff0000;
+                    }
+
+                    if (writer != null) {
+                        writer.println(
+                                iface.id + ","
+                                        + iface.parentID + ","
+                                        + findMusicDumpChildIndex(iface) + ","
+                                        + iface.type + ","
+                                        + iface.optionType + ","
+                                        + iface.contentType + ","
+                                        + iface.color + ","
+                                        + iface.activeColor + ","
+                                        + iface.hoverColor + ","
+                                        + iface.x + ","
+                                        + iface.y + ","
+                                        + iface.width + ","
+                                        + iface.height + ","
+                                        + csvMusicDumpValue(iface.text) + ","
+                                        + csvMusicDumpValue(iface.activeText) + ","
+                                        + csvMusicDumpValue(iface.option)
+                        );
+
+                        System.out.println(
+                                "[MUSIC-LINE-DUMP] id=" + iface.id
+                                        + " parent=" + iface.parentID
+                                        + " childIndex=" + findMusicDumpChildIndex(iface)
+                                        + " color=" + iface.color
+                                        + " text=\"" + iface.text + "\""
+                                        + " activeText=\"" + iface.activeText + "\""
+                        );
+                    }
+                }
+            }
+
+            if (writer != null) {
+                writer.close();
+                System.out.println("[MUSIC-LINE-DUMP] wrote music_interface_lines_dump.csv matched=" + matched);
+            } else {
+                System.out.println("[MUSIC-LINE-DUMP] matched=" + matched);
+            }
+        } catch (Exception ex) {
+            System.out.println("[MUSIC-LINE-DUMP] failed: " + ex);
+            ex.printStackTrace();
+        }
     }
 
     @Override
@@ -3256,7 +3602,146 @@ public class Game extends GameShell {
      * @param iface the interface.
      * @return <code>false</code> to suppress packet 185.
      */
+    private String debugString(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value.replace("\n", "\\n").replace("\r", "\\r");
+    }
+
+    private void debugInterfaceVarpData(String label, IfType iface) {
+        if (iface == null) {
+            return;
+        }
+
+        boolean printedHeader = false;
+
+        if ((iface.scriptComparator != null) || (iface.scriptOperand != null)) {
+            if (!printedHeader) {
+                System.out.println("[VARP-CLICK]   " + label + " iface=" + iface.id);
+                printedHeader = true;
+            }
+
+            System.out.println(
+                    "[VARP-CLICK]     comparators=" + Arrays.toString(iface.scriptComparator)
+                            + " operands=" + Arrays.toString(iface.scriptOperand)
+            );
+        }
+
+        if (iface.scripts == null) {
+            return;
+        }
+
+        if (!printedHeader) {
+            System.out.println("[VARP-CLICK]   " + label + " iface=" + iface.id);
+            printedHeader = true;
+        }
+
+        for (int scriptIndex = 0; scriptIndex < iface.scripts.length; scriptIndex++) {
+            int[] script = iface.scripts[scriptIndex];
+
+            if (script == null) {
+                continue;
+            }
+
+            System.out.println(
+                    "[VARP-CLICK]     script[" + scriptIndex + "]=" + Arrays.toString(script)
+            );
+
+            // CS1 opcode 5 reads a varp/config value. The next integer is the
+            // config id.
+            for (int pc = 0; pc < script.length - 1; pc++) {
+                if (script[pc] == 0) {
+                    break;
+                }
+
+                if (script[pc] == 5) {
+                    System.out.println(
+                            "[VARP-CLICK]       possible varp/config id=" + script[pc + 1]
+                                    + " from script[" + scriptIndex + "] pc=" + pc
+                    );
+                }
+            }
+        }
+    }
+
+    private void debugInterfaceVarpClick(IfType iface) {
+        if (!DEBUG_VARP_CLICK_IDS || iface == null) {
+            return;
+        }
+
+        try {
+            System.out.println(
+                    "[VARP-CLICK] clicked iface=" + iface.id
+                            + " parent=" + iface.parentID
+                            + " type=" + iface.type
+                            + " optionType=" + iface.optionType
+                            + " contentType=" + iface.contentType
+                            + " option=\"" + debugString(iface.option) + "\""
+                            + " text=\"" + debugString(iface.text) + "\""
+                            + " activeText=\"" + debugString(iface.activeText) + "\""
+            );
+
+            debugInterfaceVarpData("clicked", iface);
+
+            if (!DEBUG_VARP_CLICK_SCAN_SIBLINGS || IfType.instances == null) {
+                return;
+            }
+
+            for (int id = 0; id < IfType.instances.length; id++) {
+                IfType other = IfType.instances[id];
+
+                if (other == null || other == iface) {
+                    continue;
+                }
+
+                if (other.parentID != iface.parentID) {
+                    continue;
+                }
+
+                if (other.scripts == null && other.scriptComparator == null && other.scriptOperand == null) {
+                    continue;
+                }
+
+                System.out.println(
+                        "[VARP-CLICK] sibling iface=" + other.id
+                                + " parent=" + other.parentID
+                                + " type=" + other.type
+                                + " optionType=" + other.optionType
+                                + " contentType=" + other.contentType
+                                + " option=\"" + debugString(other.option) + "\""
+                                + " text=\"" + debugString(other.text) + "\""
+                                + " activeText=\"" + debugString(other.activeText) + "\""
+                );
+                debugInterfaceVarpData("sibling", other);
+            }
+        } catch (Exception ex) {
+            System.out.println("[VARP-CLICK] debug failed: " + ex);
+        }
+    }
+
+    private void debugInterfaceButtonID(int interfaceID, String source) {
+        if (!DEBUG_VARP_CLICK_IDS) {
+            return;
+        }
+
+        System.out.println("[VARP-CLICK] source=" + source + " button/interface id=" + interfaceID);
+
+        try {
+            if (IfType.instances == null || interfaceID < 0 || interfaceID >= IfType.instances.length) {
+                System.out.println("[VARP-CLICK]   no IfType instance for id=" + interfaceID);
+                return;
+            }
+
+            debugInterfaceVarpClick(IfType.instances[interfaceID]);
+        } catch (Exception ex) {
+            System.out.println("[VARP-CLICK] button debug failed: " + ex);
+        }
+    }
+
     public boolean handleInterfaceAction(IfType iface) {
+        debugInterfaceVarpClick(iface);
         int type = iface.contentType;
 
         if (friendlistStatus == 2) {
@@ -4835,6 +5320,7 @@ public class Game extends GameShell {
                 useObjOption0(a, b, c);
                 break;
             case 315:
+                debugInterfaceButtonID(b, "menu-action-315");
                 useButton(b);
                 break;
             case 561:
@@ -6120,7 +6606,7 @@ public class Game extends GameShell {
                     }
                 }
                 if (chatTyped.equals("::dump")) {
-                    IfType.dumpInterfaceTree(11462);
+                    IfType.dumpInterfaceTree(3559);
                 }
             }
 
@@ -7150,7 +7636,17 @@ public class Game extends GameShell {
                     mouseRecorder.length = 0;
                     super.focused = true;
                     _focused = true;
+                    // Stop title/login screen music before entering the game.
+                    // Server-side region music will be sent after login.
+                    stopMidi();
+                    song = -1;
+                    nextSong = -1;
+                    nextSongDelay = 0;
+                    songFading = false;
                     ingame = true;
+                    // Stop title-screen MIDI immediately on successful login.
+                    // Server packet 74 will start the area music after login.
+                    Signlink.stopMidi();
                     out.position = 0;
                     in.position = 0;
                     packetType = -1;
