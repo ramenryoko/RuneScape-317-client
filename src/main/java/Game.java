@@ -20,6 +20,10 @@ import java.util.zip.CRC32;
 
 public class Game extends GameShell {
 
+    private static final int CTRL_WHEEL_ZOOM_MIN = -320;
+    private static final int CTRL_WHEEL_ZOOM_MAX = 480;
+    private static final int CTRL_WHEEL_ZOOM_STEP = 40;
+    private int ctrlMouseWheelZoom = 0;
     public static boolean DEBUG_DUMP_MUSIC_LINE_DATA = false;
     public static boolean DEFAULT_MUSIC_LINES_RED_ON_STARTUP = false;
     private static final boolean DEBUG_AUTOCAST_VARPS = false;
@@ -874,6 +878,43 @@ public class Game extends GameShell {
     public int lastWaveLoops = -1;
 
     public Game() {
+    }
+
+    @Override
+    protected void handleMouseWheel(int rotation, int x, int y, boolean ctrlDown) {
+        if (!ctrlDown) {
+            return;
+        }
+
+        if (!isMouseOverGameViewport(x, y)) {
+            return;
+        }
+
+        ctrlMouseWheelZoom = clampCtrlWheelZoom(ctrlMouseWheelZoom + (rotation * CTRL_WHEEL_ZOOM_STEP));
+    }
+
+    private boolean isMouseOverGameViewport(int x, int y) {
+        return x >= 4 && x <= 516 && y >= 4 && y <= 338;
+    }
+
+    private int clampCtrlWheelZoom(int value) {
+        if (value < CTRL_WHEEL_ZOOM_MIN) {
+            return CTRL_WHEEL_ZOOM_MIN;
+        }
+        if (value > CTRL_WHEEL_ZOOM_MAX) {
+            return CTRL_WHEEL_ZOOM_MAX;
+        }
+        return value;
+    }
+
+    private int applyCtrlWheelZoom(int baseZoom) {
+        int zoom = baseZoom + ctrlMouseWheelZoom;
+
+        if (zoom < 100) {
+            return 100;
+        }
+
+        return zoom;
     }
 
     private Image24 loadPkHeadiconSprite(FileArchive archiveMedia, int index) {
@@ -13139,7 +13180,7 @@ private void drawViewportInterfaces() {
             }
 
             int yaw = (orbitCameraYaw + cameraAnticheatAngle) & 0x7ff;
-            orbitCamera(600 + (pitch * 3), pitch, orbitCameraX, getHeightmapY(currentLevel, localPlayer.x, localPlayer.z) - 50, yaw, orbitCameraZ);
+            orbitCamera(applyCtrlWheelZoom(600) + (pitch * 3), pitch, orbitCameraX, getHeightmapY(currentLevel, localPlayer.x, localPlayer.z) - 50, yaw, orbitCameraZ);
         }
 
         int topLevel;

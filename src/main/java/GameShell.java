@@ -7,7 +7,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
 
-public abstract class GameShell extends Canvas implements Runnable, MouseListener, MouseMotionListener, KeyListener, FocusListener, WindowListener {
+public abstract class GameShell extends Canvas implements Runnable, MouseListener, MouseMotionListener, MouseWheelListener, KeyListener, FocusListener, WindowListener {
 
     public final long[] otim = new long[10];
     public final double[] frameTime = new double[100];
@@ -36,6 +36,7 @@ public abstract class GameShell extends Canvas implements Runnable, MouseListene
     public int mouseClickX;
     public int mouseClickY;
     public long mouseClickTime;
+    public int mouseWheelRotation;
     public int keyQueueReadPos;
     public int keyQueueWritePos;
 
@@ -63,6 +64,7 @@ public abstract class GameShell extends Canvas implements Runnable, MouseListene
         try {
             this.addMouseListener(this);
             this.addMouseMotionListener(this);
+            this.addMouseWheelListener(this);
             this.addKeyListener(this);
             this.addFocusListener(this);
 
@@ -438,6 +440,19 @@ public abstract class GameShell extends Canvas implements Runnable, MouseListene
 
     @Override
     public void windowOpened(WindowEvent e) {
+    }
+
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        idleCycles = 0;
+        mouseWheelRotation += e.getWheelRotation();
+        mouseX = e.getX();
+        mouseY = e.getY();
+        handleMouseWheel(e.getWheelRotation(), e.getX(), e.getY(), e.isControlDown() || actionKey[5] == 1);
+    }
+
+    protected void handleMouseWheel(int rotation, int x, int y, boolean ctrlDown) {
+        // Optional subclass hook.
     }
 
     /**
