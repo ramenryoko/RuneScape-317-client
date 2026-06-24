@@ -1301,6 +1301,13 @@ public class Game extends GameShell {
             SpotAnimType.unpack(archiveConfig);
             VarpType.unpack(archiveConfig);
             VarbitType.unpack(archiveConfig);
+
+            // Debug: dump tree/farming-patch varp/varbit controller data once after loc/varbit load.
+            // TreePatchVarpDumper.dump(this);
+            // Debug: dump all farming patch varp/varbit controller data once after loc/varbit load.
+            AllFarmingPatchVarpDumper.dump(this);
+
+
             // Farming debug: dump compost bin object morph varp/varbit data once after cache loads.
             // CompostBinVarpDumper.dump(this);
             // FarmingPatchAudit377.dumpLoadedClient();
@@ -2175,7 +2182,7 @@ public class Game extends GameShell {
 
             SceneBuilder builder = new SceneBuilder(levelTileFlags, 104, 104, levelHeightmap);
 
-            FarmingPatchAudit377.beginMapCapture(sceneBaseTileX, sceneBaseTileZ);
+            // FarmingPatchAudit377.beginMapCapture(sceneBaseTileX, sceneBaseTileZ);
 
             out.writeOp(0);
 
@@ -2188,7 +2195,7 @@ public class Game extends GameShell {
             out.writeOp(0);
 
             builder.build(levelCollisionMap, scene);
-            FarmingPatchAudit377.dumpLoadedClient();
+            // FarmingPatchAudit377.dumpLoadedClient();
             areaViewport.bind();
 
             out.writeOp(0);
