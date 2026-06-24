@@ -262,6 +262,8 @@ public class LocType {
         if ((value < 0) || (value >= overrideTypeIDs.length) || (overrideTypeIDs[value] == -1)) {
             return null;
         } else {
+            // RSPY MORPH RETURN LOG
+            try { rspyFarmLogMorph("return", value, overrideTypeIDs[value]); } catch (Throwable rspyT) { }
             return get(overrideTypeIDs[value]);
         }
     }
@@ -562,4 +564,73 @@ public class LocType {
         }
     }
 
+
+
+
+
+    // RSPY DEBUG START: farming loc morph logging
+    private boolean rspyFarmInterestingLoc() {
+        try {
+            String n = "";
+            try {
+                n = String.valueOf(this.name).toLowerCase();
+            } catch (Throwable ignored) {
+            }
+
+            if (this.index >= 7500 && this.index <= 8700) {
+                return true;
+            }
+
+            if (this.varbit >= 700 && this.varbit <= 800) {
+                return true;
+            }
+
+            if (this.varbit >= 4770 && this.varbit <= 4780) {
+                return true;
+            }
+
+            return n.indexOf("farming") >= 0
+                || n.indexOf("patch") >= 0
+                || n.indexOf("herb") >= 0
+                || n.indexOf("allotment") >= 0
+                || n.indexOf("tree") >= 0
+                || n.indexOf("mushroom") >= 0
+                || n.indexOf("cactus") >= 0
+                || n.indexOf("bush") >= 0
+                || n.indexOf("hops") >= 0;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    private void rspyFarmLogMorph(String phase, int childIndex, int childId) {
+        try {
+            if (!Game.RSPY_FARM_LIVE_LOG || !rspyFarmInterestingLoc()) {
+                return;
+            }
+
+            int overrideLen = -1;
+            try {
+                overrideLen = this.overrideTypeIDs == null ? -1 : this.overrideTypeIDs.length;
+            } catch (Throwable ignored) {
+            }
+
+            Game.rspyFarmLog(
+                "MORPH " + phase
+                + " object=" + this.index
+                + " name=" + this.name
+                + " varbit=" + this.varbit
+                + " varp=" + this.varp
+                + " childIndex=" + childIndex
+                + " childId=" + childId
+                + " overrideLen=" + overrideLen
+            );
+        } catch (Throwable t) {
+            try {
+                Game.rspyFarmLog("MORPH_LOG_FAILED object=" + this.index + " " + t);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+    // RSPY DEBUG END: farming loc morph logging
 }

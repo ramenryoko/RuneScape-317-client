@@ -1298,7 +1298,7 @@ public class Game extends GameShell {
             SpotAnimType.unpack(archiveConfig);
             VarpType.unpack(archiveConfig);
             VarbitType.unpack(archiveConfig);
-
+            FarmingPatchAudit377.dumpLoadedClient();
             if (!lowmem) {
                 drawProgress(90, "Unpacking sounds");
                 SoundTrack.unpack(new Buffer(archiveSounds.read("sounds.dat")));
@@ -2170,6 +2170,8 @@ public class Game extends GameShell {
 
             SceneBuilder builder = new SceneBuilder(levelTileFlags, 104, 104, levelHeightmap);
 
+            FarmingPatchAudit377.beginMapCapture(sceneBaseTileX, sceneBaseTileZ);
+
             out.writeOp(0);
 
             if (sceneInstanced) {
@@ -2181,6 +2183,7 @@ public class Game extends GameShell {
             out.writeOp(0);
 
             builder.build(levelCollisionMap, scene);
+            FarmingPatchAudit377.dumpLoadedClient();
             areaViewport.bind();
 
             out.writeOp(0);
@@ -6002,6 +6005,8 @@ public class Game extends GameShell {
 
             if (varps[varpID] != newValue) {
                 varps[varpID] = newValue;
+                // RSPY CONFIG WRITE LOG
+                try { int rspyCfgId = (int)(varpID); if (rspyFarmInterestingConfigId(rspyCfgId) && RSPY_FARM_LIVE_LOG) rspyFarmLog("CONFIG_WRITE varps[" + rspyCfgId + "]=" + varps[rspyCfgId]); } catch (Throwable rspyT) { }
                 updateVarp(varpID);
                 redrawSidebar = true;
             }
@@ -6332,6 +6337,8 @@ public class Game extends GameShell {
         if ((iface.scripts != null) && (iface.scripts[0][0] == 5)) {
             int varpID = iface.scripts[0][1];
             varps[varpID] = 1 - varps[varpID];
+            // RSPY CONFIG WRITE LOG
+            try { int rspyCfgId = (int)(varpID); if (rspyFarmInterestingConfigId(rspyCfgId) && RSPY_FARM_LIVE_LOG) rspyFarmLog("CONFIG_WRITE varps[" + rspyCfgId + "]=" + varps[rspyCfgId]); } catch (Throwable rspyT) { }
             updateVarp(varpID);
             redrawSidebar = true;
         }
@@ -6652,6 +6659,31 @@ public class Game extends GameShell {
             }
 
             if (chatTyped.startsWith("::")) {
+            // RSPY farmdefs hook: keep this local and do not send it to the server.
+            if (rspyHandleFarmDefsCommand(chatTyped)) {
+                chatTyped = "";
+                return;
+            }
+            // RSPY farmauto hook: keep this local and do not send it to the server.
+            if (rspyHandleFarmAutoProbeCommand(chatTyped)) {
+                chatTyped = "";
+                return;
+            }
+            // RSPY farmlog hook: keep this local and do not send it to the server.
+            if (rspyHandleFarmLiveLogCommand(chatTyped)) {
+                chatTyped = "";
+                return;
+            }
+            // RSPY farmset hook: keep this local and do not send it to the server.
+            if (rspyHandleFarmSetCommand(chatTyped)) {
+                chatTyped = "";
+                return;
+            }
+            // RSPY farming debug hook: keep this local and do not send it to the server.
+            if (rspyHandleFarmingDebugCommand(chatTyped)) {
+                chatTyped = "";
+                return;
+            }
                 out.writeOp(103);
                 out.write8(chatTyped.length() - 1);
                 out.writeString(chatTyped.substring(2));
@@ -12829,6 +12861,8 @@ private void drawViewportInterfaces() {
         for (int id = 0; id < varps.length; id++) {
             if (varps[id] != varCache[id]) {
                 varps[id] = varCache[id];
+                // RSPY CONFIG WRITE LOG
+                try { int rspyCfgId = (int)(id); if (rspyFarmInterestingConfigId(rspyCfgId) && RSPY_FARM_LIVE_LOG) rspyFarmLog("CONFIG_WRITE varps[" + rspyCfgId + "]=" + varps[rspyCfgId]); } catch (Throwable rspyT) { }
                 updateVarp(id);
                 redrawSidebar = true;
             }
@@ -13071,9 +13105,13 @@ private void drawViewportInterfaces() {
         }
 
         varCache[varpID] = value;
+        // RSPY CONFIG WRITE LOG
+        try { int rspyCfgId = (int)(varpID); if (rspyFarmInterestingConfigId(rspyCfgId) && RSPY_FARM_LIVE_LOG) rspyFarmLog("CONFIG_WRITE varCache[" + rspyCfgId + "]=" + varCache[rspyCfgId]); } catch (Throwable rspyT) { }
 
         if (varps[varpID] != value) {
             varps[varpID] = value;
+            // RSPY CONFIG WRITE LOG
+            try { int rspyCfgId = (int)(varpID); if (rspyFarmInterestingConfigId(rspyCfgId) && RSPY_FARM_LIVE_LOG) rspyFarmLog("CONFIG_WRITE varps[" + rspyCfgId + "]=" + varps[rspyCfgId]); } catch (Throwable rspyT) { }
             updateVarp(varpID);
             redrawSidebar = true;
             if (stickyChatInterfaceID != -1) {
@@ -13098,9 +13136,13 @@ private void drawViewportInterfaces() {
         }
 
         varCache[varpID] = value;
+        // RSPY CONFIG WRITE LOG
+        try { int rspyCfgId = (int)(varpID); if (rspyFarmInterestingConfigId(rspyCfgId) && RSPY_FARM_LIVE_LOG) rspyFarmLog("CONFIG_WRITE varCache[" + rspyCfgId + "]=" + varCache[rspyCfgId]); } catch (Throwable rspyT) { }
 
         if (varps[varpID] != value) {
             varps[varpID] = value;
+            // RSPY CONFIG WRITE LOG
+            try { int rspyCfgId = (int)(varpID); if (rspyFarmInterestingConfigId(rspyCfgId) && RSPY_FARM_LIVE_LOG) rspyFarmLog("CONFIG_WRITE varps[" + rspyCfgId + "]=" + varps[rspyCfgId]); } catch (Throwable rspyT) { }
             updateVarp(varpID);
             redrawSidebar = true;
             if (stickyChatInterfaceID != -1) {
@@ -13291,4 +13333,1750 @@ private void drawViewportInterfaces() {
     }
 
 
+
+
+
+
+
+
+    // RSPY DEBUG START: farming varp/controller tests
+    private boolean rspyHandleFarmingDebugCommand(String rawCommand) {
+        if (rawCommand == null) {
+            return false;
+        }
+
+        String cmd = rawCommand.trim();
+        String lower = cmd.toLowerCase();
+
+        if (!lower.startsWith("::farmtest") && !lower.startsWith("::dumpvarbits")) {
+            return false;
+        }
+
+        java.io.File dir = new java.io.File("rspy_farming_tests");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        java.io.File file = new java.io.File(dir, "farmtest_" + System.currentTimeMillis() + ".txt");
+        java.io.PrintWriter out = null;
+
+        try {
+            out = new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(file)));
+            rspyFarmHeader(out, cmd);
+            rspyRunFarmCommand(out, cmd);
+            out.flush();
+
+            System.out.println("RSPY farmtest wrote: " + file.getAbsolutePath());
+        } catch (Throwable t) {
+            System.out.println("RSPY farmtest failed:");
+            t.printStackTrace();
+            if (out != null) {
+                out.println("RSPY farmtest failed:");
+                t.printStackTrace(out);
+            }
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void rspyFarmHeader(java.io.PrintWriter out, String cmd) {
+        out.println("============================================================");
+        out.println("RSPY FARMING CONTROLLER / VARP TEST");
+        out.println("command=" + cmd);
+        out.println("timeMillis=" + System.currentTimeMillis());
+        out.println("clientClass=" + this.getClass().getName());
+        out.println("workingDir=" + new java.io.File(".").getAbsolutePath());
+        out.println("============================================================");
+        out.println("");
+        out.println("Rune-Server note kept for comparison:");
+        out.println("  Common patch lanes appear to reuse config 529 byte lanes:");
+        out.println("  <<0 north/tree/bush/fruit sometimes, <<8 south/fruit sometimes, <<16 flower, <<24 herb.");
+        out.println("  Compost bins may use config 511 with lane depending on area.");
+        out.println("");
+    }
+
+    private void rspyRunFarmCommand(java.io.PrintWriter out, String cmd) {
+        String[] parts = cmd.split("\\s+");
+
+        if (parts.length <= 1) {
+            rspyDumpFarmGroup(out, "herb");
+            rspyDumpFarmGroup(out, "allotment");
+            rspyDumpFarmGroup(out, "flower");
+            rspyDumpFarmGroup(out, "tree");
+            rspyDumpFarmGroup(out, "fruit");
+            rspyDumpFarmGroup(out, "hops");
+            rspyDumpFarmGroup(out, "bush");
+            rspyDumpFarmGroup(out, "mushroom");
+            rspyDumpFarmGroup(out, "cactus");
+            rspyDumpFarmGroup(out, "spirit");
+            rspyDumpConfigArrays(out);
+            rspyDumpKnownClientValueIds(out);
+            return;
+        }
+
+        for (int i = 1; i < parts.length; i++) {
+            String arg = parts[i].toLowerCase();
+
+            if (arg.equals("all")) {
+                rspyDumpFarmGroup(out, "herb");
+                rspyDumpFarmGroup(out, "allotment");
+                rspyDumpFarmGroup(out, "flower");
+                rspyDumpFarmGroup(out, "tree");
+                rspyDumpFarmGroup(out, "fruit");
+                rspyDumpFarmGroup(out, "hops");
+                rspyDumpFarmGroup(out, "bush");
+                rspyDumpFarmGroup(out, "mushroom");
+                rspyDumpFarmGroup(out, "cactus");
+                rspyDumpFarmGroup(out, "spirit");
+                rspyDumpConfigArrays(out);
+                rspyDumpKnownClientValueIds(out);
+                continue;
+            }
+
+            if (arg.equals("configs") || arg.equals("settings")) {
+                rspyDumpConfigArrays(out);
+                rspyDumpKnownClientValueIds(out);
+                continue;
+            }
+
+            if (arg.equals("known") || arg.equals("varbits")) {
+                rspyDumpKnownClientValueIds(out);
+                rspyDumpConfigArrays(out);
+                continue;
+            }
+
+            if (arg.equals("brute")) {
+                rspyBruteForceAllFarmControllers(out);
+                continue;
+            }
+
+            if (rspyIsFarmGroup(arg)) {
+                rspyDumpFarmGroup(out, arg);
+                continue;
+            }
+
+            if (arg.indexOf("-") > 0) {
+                String[] range = arg.split("-");
+                if (range.length == 2) {
+                    int start = Integer.parseInt(range[0]);
+                    int end = Integer.parseInt(range[1]);
+                    rspyDumpObjectRange(out, start, end, true);
+                }
+                continue;
+            }
+
+            int objectId = Integer.parseInt(arg);
+            rspyDumpObjectDeep(out, objectId, false);
+            rspyBruteForceController(out, objectId, 3);
+        }
+    }
+
+    private boolean rspyIsFarmGroup(String group) {
+        return group.equals("herb") || group.equals("herbs")
+            || group.equals("allotment") || group.equals("allotments")
+            || group.equals("flower") || group.equals("flowers")
+            || group.equals("tree") || group.equals("trees")
+            || group.equals("fruit") || group.equals("fruit_tree") || group.equals("fruit-trees")
+            || group.equals("hops")
+            || group.equals("bush") || group.equals("bushes")
+            || group.equals("mushroom") || group.equals("mushrooms")
+            || group.equals("cactus") || group.equals("cacti")
+            || group.equals("spirit") || group.equals("spirit_tree");
+    }
+
+    private void rspyDumpFarmGroup(java.io.PrintWriter out, String group) {
+        group = group.toLowerCase();
+
+        out.println("");
+        out.println("============================================================");
+        out.println("GROUP " + group);
+        out.println("============================================================");
+
+        if (group.equals("herb") || group.equals("herbs")) {
+            rspyDumpObjectRange(out, 8132, 8153, true);
+            rspyBruteForceController(out, 8150, 3);
+            rspyBruteForceController(out, 8151, 3);
+            rspyBruteForceController(out, 8152, 3);
+            rspyBruteForceController(out, 8153, 3);
+            return;
+        }
+
+        if (group.equals("allotment") || group.equals("allotments")) {
+            rspyDumpObjectRange(out, 8535, 8686, true);
+            int[] ids = new int[] {8550, 8551, 8552, 8553, 8554, 8555, 8556, 8557};
+            for (int i = 0; i < ids.length; i++) {
+                rspyBruteForceController(out, ids[i], 3);
+            }
+            return;
+        }
+
+        if (group.equals("flower") || group.equals("flowers")) {
+            rspyDumpObjectRange(out, 7840, 7920, true);
+            return;
+        }
+
+        if (group.equals("tree") || group.equals("trees")) {
+            rspyDumpObjectRange(out, 8392, 8534, true);
+            return;
+        }
+
+        if (group.equals("fruit") || group.equals("fruit_tree") || group.equals("fruit-trees")) {
+            rspyDumpObjectRange(out, 7935, 8131, true);
+            return;
+        }
+
+        if (group.equals("hops")) {
+            rspyDumpObjectRange(out, 8154, 8310, true);
+            return;
+        }
+
+        if (group.equals("bush") || group.equals("bushes")) {
+            rspyDumpObjectRange(out, 7573, 7742, true);
+            return;
+        }
+
+        if (group.equals("mushroom") || group.equals("mushrooms")) {
+            rspyDumpObjectRange(out, 8311, 8337, true);
+            return;
+        }
+
+        if (group.equals("cactus") || group.equals("cacti")) {
+            rspyDumpObjectRange(out, 7743, 7770, true);
+            return;
+        }
+
+        if (group.equals("spirit") || group.equals("spirit_tree")) {
+            rspyDumpObjectRange(out, 8339, 8381, true);
+            return;
+        }
+    }
+
+    private void rspyBruteForceAllFarmControllers(java.io.PrintWriter out) {
+        out.println("");
+        out.println("============================================================");
+        out.println("BRUTE FORCE COMMON FARM CONTROLLERS");
+        out.println("============================================================");
+        int[] ids = new int[] {
+            8150, 8151, 8152, 8153,
+            8550, 8551, 8552, 8553, 8554, 8555, 8556, 8557,
+            7840, 7841,
+            8392, 8393, 8394, 8395,
+            8047, 8048, 8049, 8050,
+            8311, 8312, 8313, 8314,
+            7573, 7574, 7575, 7576,
+            7743, 7744, 7745, 7746,
+            8339, 8340, 8341, 8342
+        };
+
+        for (int i = 0; i < ids.length; i++) {
+            rspyBruteForceController(out, ids[i], 3);
+        }
+    }
+
+    private void rspyDumpObjectRange(java.io.PrintWriter out, int start, int end, boolean onlyInteresting) {
+        if (end < start) {
+            int tmp = start;
+            start = end;
+            end = tmp;
+        }
+
+        int count = 0;
+        for (int id = start; id <= end; id++) {
+            boolean printed = rspyDumpObjectDeep(out, id, onlyInteresting);
+            if (printed) {
+                count++;
+            }
+        }
+
+        out.println("Range " + start + "-" + end + " printed interesting objects=" + count);
+    }
+
+    private Class rspyFindClass(String[] names) {
+        for (int i = 0; i < names.length; i++) {
+            try {
+                return Class.forName(names[i]);
+            } catch (Throwable ignored) {
+            }
+        }
+        return null;
+    }
+
+    private Object rspyLookupObject(int objectId) throws Exception {
+        Class objectClass = rspyFindClass(new String[] {"ObjectDef", "ObjectDefinition", "LocType", "Class46", "Class8"});
+        if (objectClass == null) {
+            return null;
+        }
+
+        java.lang.reflect.Method[] methods = objectClass.getDeclaredMethods();
+        for (int i = 0; i < methods.length; i++) {
+            java.lang.reflect.Method m = methods[i];
+            Class[] params = m.getParameterTypes();
+            if (params.length == 1 && params[0] == Integer.TYPE && objectClass.isAssignableFrom(m.getReturnType())) {
+                m.setAccessible(true);
+                return m.invoke(null, new Object[] {new Integer(objectId)});
+            }
+        }
+
+        return null;
+    }
+
+    private boolean rspyDumpObjectDeep(java.io.PrintWriter out, int objectId, boolean onlyInteresting) {
+        try {
+            Object def = rspyLookupObject(objectId);
+            if (def == null) {
+                if (!onlyInteresting) {
+                    out.println("OBJECT " + objectId + ": lookup returned null or no object class.");
+                }
+                return false;
+            }
+
+            Class cls = def.getClass();
+            java.lang.reflect.Field[] fields = cls.getDeclaredFields();
+
+            String name = "";
+            int varbit = -1;
+            int varp = -1;
+            int[] childArray = null;
+            String childFieldName = "";
+            java.util.ArrayList intLines = new java.util.ArrayList();
+
+            for (int i = 0; i < fields.length; i++) {
+                java.lang.reflect.Field f = fields[i];
+                f.setAccessible(true);
+                Class type = f.getType();
+                String fname = f.getName().toLowerCase();
+
+                if (type == String.class) {
+                    Object v = f.get(def);
+                    if (v != null && String.valueOf(v).length() > 0) {
+                        name = String.valueOf(v);
+                    }
+                } else if (type == Integer.TYPE) {
+                    int v = f.getInt(def);
+                    if (v != 0 && v != -1) {
+                        intLines.add("int " + f.getName() + " = " + v);
+                    }
+
+                    if (fname.indexOf("varbit") >= 0 || fname.indexOf("var_bit") >= 0) {
+                        varbit = v;
+                    } else if (fname.equals("varp") || fname.indexOf("varp") >= 0 || fname.indexOf("setting") >= 0 || fname.indexOf("config") >= 0) {
+                        varp = v;
+                    }
+                } else if (type.isArray() && type.getComponentType() == Integer.TYPE) {
+                    Object arr = f.get(def);
+                    if (arr != null) {
+                        int len = java.lang.reflect.Array.getLength(arr);
+                        if (len > 0 && len <= 300) {
+                            int[] values = new int[len];
+                            boolean hasFarmValue = false;
+                            for (int j = 0; j < len; j++) {
+                                values[j] = java.lang.reflect.Array.getInt(arr, j);
+                                if ((values[j] >= 7500 && values[j] <= 8700) || values[j] == -1) {
+                                    hasFarmValue = true;
+                                }
+                            }
+                            if (hasFarmValue && len > 1) {
+                                childArray = values;
+                                childFieldName = f.getName();
+                            }
+                        }
+                    }
+                }
+            }
+
+            boolean interesting = (varbit > 0 || varp > 0 || childArray != null || name.toLowerCase().indexOf("patch") >= 0 || name.toLowerCase().indexOf("herb") >= 0 || name.toLowerCase().indexOf("tree") >= 0);
+            if (onlyInteresting && !interesting) {
+                return false;
+            }
+
+            out.println("");
+            out.println("---- OBJECT " + objectId + " [" + cls.getName() + "] ----");
+            if (name.length() > 0) {
+                out.println("name=" + name);
+            }
+            out.println("detectedVarbit=" + varbit);
+            out.println("detectedVarp=" + varp);
+
+            for (int i = 0; i < intLines.size(); i++) {
+                out.println(String.valueOf(intLines.get(i)));
+            }
+
+            if (childArray != null) {
+                out.print("childrenField=" + childFieldName + " len=" + childArray.length + " values=[");
+                for (int i = 0; i < childArray.length; i++) {
+                    if (i > 0) {
+                        out.print(", ");
+                    }
+                    out.print(childArray[i]);
+                }
+                out.println("]");
+                rspyPrintChildIndexSummary(out, childArray);
+            }
+
+            return true;
+        } catch (Throwable t) {
+            out.println("OBJECT " + objectId + ": dump failed.");
+            t.printStackTrace(out);
+            return true;
+        }
+    }
+
+    private void rspyPrintChildIndexSummary(java.io.PrintWriter out, int[] childArray) {
+        out.println("child index summary, first 64:");
+        for (int i = 0; i < childArray.length && i < 64; i++) {
+            if (childArray[i] != -1) {
+                out.println("  idx " + i + " -> object " + childArray[i]);
+            }
+        }
+
+        if (childArray.length > 64) {
+            out.println("child index summary, disease/water/dead bands:");
+            int[] probes = new int[] {64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,128,129,130,131,132,133,134,135,136,137,192,193,194,195,196,197,198,199,200,201};
+            for (int p = 0; p < probes.length; p++) {
+                int idx = probes[p];
+                if (idx >= 0 && idx < childArray.length && childArray[idx] != -1) {
+                    out.println("  idx " + idx + " -> object " + childArray[idx]);
+                }
+            }
+        }
+    }
+
+    private void rspyBruteForceController(java.io.PrintWriter out, int objectId, int targetIndex) {
+        try {
+            Object def = rspyLookupObject(objectId);
+            if (def == null) {
+                return;
+            }
+
+            Class cls = def.getClass();
+            java.lang.reflect.Field[] fields = cls.getDeclaredFields();
+
+            int varbit = -1;
+            int varp = -1;
+            int[] childArray = null;
+
+            for (int i = 0; i < fields.length; i++) {
+                java.lang.reflect.Field f = fields[i];
+                f.setAccessible(true);
+                Class type = f.getType();
+                String fname = f.getName().toLowerCase();
+
+                if (type == Integer.TYPE) {
+                    int v = f.getInt(def);
+                    if (fname.indexOf("varbit") >= 0 || fname.indexOf("var_bit") >= 0) {
+                        varbit = v;
+                    } else if (fname.equals("varp") || fname.indexOf("varp") >= 0 || fname.indexOf("setting") >= 0 || fname.indexOf("config") >= 0) {
+                        varp = v;
+                    }
+                } else if (type.isArray() && type.getComponentType() == Integer.TYPE) {
+                    Object arr = f.get(def);
+                    if (arr != null) {
+                        int len = java.lang.reflect.Array.getLength(arr);
+                        if (len > 1 && len <= 300) {
+                            int[] values = new int[len];
+                            boolean hasFarmValue = false;
+                            for (int j = 0; j < len; j++) {
+                                values[j] = java.lang.reflect.Array.getInt(arr, j);
+                                if ((values[j] >= 7500 && values[j] <= 8700) || values[j] == -1) {
+                                    hasFarmValue = true;
+                                }
+                            }
+                            if (hasFarmValue) {
+                                childArray = values;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (childArray == null && varbit < 0 && varp < 0) {
+                return;
+            }
+
+            out.println("");
+            out.println("BRUTE object=" + objectId + " targetChildIndex=" + targetIndex + " varbit=" + varbit + " varp=" + varp);
+            if (childArray != null && targetIndex >= 0 && targetIndex < childArray.length) {
+                out.println("  target child object=" + childArray[targetIndex]);
+            }
+
+            int[] configIds = new int[] {529, 511, 504, 505, 780, 781, 782, 783, varbit, varp};
+            int[] lows = new int[] {0, 8, 16, 24};
+
+            for (int c = 0; c < configIds.length; c++) {
+                int configId = configIds[c];
+                if (configId < 0) {
+                    continue;
+                }
+                for (int l = 0; l < lows.length; l++) {
+                    int low = lows[l];
+                    int value = targetIndex << low;
+                    out.println("  candidate config=" + configId + " low=" + low + " valueForIndex" + targetIndex + "=" + value);
+                }
+            }
+        } catch (Throwable t) {
+            out.println("BRUTE object=" + objectId + " failed.");
+            t.printStackTrace(out);
+        }
+    }
+
+    private void rspyDumpKnownClientValueIds(java.io.PrintWriter out) {
+        out.println("");
+        out.println("---- Known/likely farming IDs to inspect ----");
+        int[] ids = new int[] {511, 529, 504, 505, 780, 781, 782, 783, 4771, 4772, 4773, 4774};
+        for (int i = 0; i < ids.length; i++) {
+            out.println("id=" + ids[i]);
+        }
+    }
+
+    private void rspyDumpConfigArrays(java.io.PrintWriter out) {
+        out.println("");
+        out.println("---- Client int[] fields containing likely config values ----");
+
+        try {
+            java.lang.reflect.Field[] fields = this.getClass().getDeclaredFields();
+            int[] probes = new int[] {511, 529, 504, 505, 780, 781, 782, 783, 4771, 4772, 4773, 4774};
+
+            for (int i = 0; i < fields.length; i++) {
+                java.lang.reflect.Field f = fields[i];
+                f.setAccessible(true);
+
+                Class type = f.getType();
+                if (!(type.isArray() && type.getComponentType() == Integer.TYPE)) {
+                    continue;
+                }
+
+                Object arr = f.get(this);
+                if (arr == null) {
+                    continue;
+                }
+
+                int len = java.lang.reflect.Array.getLength(arr);
+                if (len <= 10) {
+                    continue;
+                }
+
+                boolean canProbe = false;
+                for (int p = 0; p < probes.length; p++) {
+                    if (probes[p] >= 0 && probes[p] < len) {
+                        canProbe = true;
+                        break;
+                    }
+                }
+
+                if (!canProbe) {
+                    continue;
+                }
+
+                out.print("client int[] " + f.getName() + " length=" + len);
+                for (int p = 0; p < probes.length; p++) {
+                    int idx = probes[p];
+                    if (idx >= 0 && idx < len) {
+                        out.print(" [" + idx + "]=" + java.lang.reflect.Array.getInt(arr, idx));
+                    }
+                }
+                out.println("");
+            }
+        } catch (Throwable t) {
+            out.println("Client config array dump failed.");
+            t.printStackTrace(out);
+        }
+    }
+    // RSPY DEBUG END: farming varp/controller tests
+
+
+
+
+    // RSPY DEBUG START: farming live varp setter
+    private boolean rspyHandleFarmSetCommand(String rawCommand) {
+        if (rawCommand == null) {
+            return false;
+        }
+
+        String cmd = rawCommand.trim();
+        String lower = cmd.toLowerCase();
+
+        if (!lower.startsWith("::farmset")
+                && !lower.startsWith("::farmsetall")
+                && !lower.startsWith("::farmreset")
+                && !lower.startsWith("::farmconfigdump")) {
+            return false;
+        }
+
+        java.io.File dir = new java.io.File("rspy_farming_tests");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        java.io.File file = new java.io.File(dir, "farmset_" + System.currentTimeMillis() + ".txt");
+        java.io.PrintWriter out = null;
+
+        try {
+            out = new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(file)));
+            out.println("============================================================");
+            out.println("RSPY FARMING LIVE VARP SETTER");
+            out.println("command=" + cmd);
+            out.println("timeMillis=" + System.currentTimeMillis());
+            out.println("workingDir=" + new java.io.File(".").getAbsolutePath());
+            out.println("============================================================");
+            out.println("");
+
+            if (lower.startsWith("::farmconfigdump")) {
+                rspyFarmDumpRelevantConfigArrays(out);
+            } else if (lower.startsWith("::farmreset")) {
+                int[] ids = new int[] {529, 511, 504, 505, 708, 709, 710, 711, 712, 713, 714, 715, 780, 781, 782, 783};
+                for (int i = 0; i < ids.length; i++) {
+                    rspyFarmSetConfig(out, ids[i], 0, false);
+                }
+                rspyFarmDumpRelevantConfigArrays(out);
+            } else {
+                String[] parts = cmd.split("\\s+");
+                if (parts.length < 3) {
+                    out.println("Usage:");
+                    out.println("  ::farmset <configId> <value>");
+                    out.println("  ::farmsetall <configId> <value>");
+                    out.println("  ::farmreset");
+                    out.println("  ::farmconfigdump");
+                } else {
+                    int configId = Integer.parseInt(parts[1]);
+                    int value = Integer.parseInt(parts[2]);
+                    boolean allArrays = lower.startsWith("::farmsetall");
+                    rspyFarmSetConfig(out, configId, value, allArrays);
+                    rspyFarmDumpRelevantConfigArrays(out);
+                }
+            }
+
+            out.flush();
+            System.out.println("RSPY farmset wrote: " + file.getAbsolutePath());
+        } catch (Throwable t) {
+            System.out.println("RSPY farmset failed:");
+            t.printStackTrace();
+            if (out != null) {
+                out.println("RSPY farmset failed:");
+                t.printStackTrace(out);
+            }
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void rspyFarmSetConfig(java.io.PrintWriter out, int configId, int value, boolean allArrays) {
+        out.println("SET configId=" + configId + " value=" + value + " allArrays=" + allArrays);
+
+        try {
+            java.lang.reflect.Field[] fields = this.getClass().getDeclaredFields();
+
+            for (int i = 0; i < fields.length; i++) {
+                java.lang.reflect.Field f = fields[i];
+                f.setAccessible(true);
+
+                Class type = f.getType();
+                if (!(type.isArray() && type.getComponentType() == Integer.TYPE)) {
+                    continue;
+                }
+
+                Object arr = f.get(this);
+                if (arr == null) {
+                    continue;
+                }
+
+                int len = java.lang.reflect.Array.getLength(arr);
+                if (configId < 0 || configId >= len) {
+                    continue;
+                }
+
+                String name = f.getName();
+                String lname = name.toLowerCase();
+
+                boolean likelyConfigArray =
+                    lname.equals("varps")
+                    || lname.equals("varcache")
+                    || lname.indexOf("varp") >= 0
+                    || lname.indexOf("varcache") >= 0
+                    || lname.indexOf("setting") >= 0
+                    || lname.indexOf("config") >= 0;
+
+                if (!allArrays && !likelyConfigArray) {
+                    continue;
+                }
+
+                int before = java.lang.reflect.Array.getInt(arr, configId);
+                java.lang.reflect.Array.setInt(arr, configId, value);
+                int after = java.lang.reflect.Array.getInt(arr, configId);
+
+                out.println("  " + name + "[" + configId + "] " + before + " -> " + after);
+            }
+        } catch (Throwable t) {
+            out.println("farmset reflection failed.");
+            t.printStackTrace(out);
+        }
+    }
+
+    private void rspyFarmDumpRelevantConfigArrays(java.io.PrintWriter out) {
+        out.println("");
+        out.println("CONFIG ARRAY SNAPSHOT");
+        int[] probes = new int[] {511, 529, 504, 505, 708, 709, 710, 711, 712, 713, 714, 715, 780, 781, 782, 783, 4771, 4772, 4773, 4774};
+
+        try {
+            java.lang.reflect.Field[] fields = this.getClass().getDeclaredFields();
+
+            for (int i = 0; i < fields.length; i++) {
+                java.lang.reflect.Field f = fields[i];
+                f.setAccessible(true);
+
+                Class type = f.getType();
+                if (!(type.isArray() && type.getComponentType() == Integer.TYPE)) {
+                    continue;
+                }
+
+                Object arr = f.get(this);
+                if (arr == null) {
+                    continue;
+                }
+
+                int len = java.lang.reflect.Array.getLength(arr);
+                if (len < 530) {
+                    continue;
+                }
+
+                String name = f.getName();
+                String lname = name.toLowerCase();
+
+                boolean likelyConfigArray =
+                    lname.equals("varps")
+                    || lname.equals("varcache")
+                    || lname.indexOf("varp") >= 0
+                    || lname.indexOf("varcache") >= 0
+                    || lname.indexOf("setting") >= 0
+                    || lname.indexOf("config") >= 0;
+
+                if (!likelyConfigArray) {
+                    continue;
+                }
+
+                out.print("  " + name + " length=" + len);
+                for (int p = 0; p < probes.length; p++) {
+                    int idx = probes[p];
+                    if (idx >= 0 && idx < len) {
+                        out.print(" [" + idx + "]=" + java.lang.reflect.Array.getInt(arr, idx));
+                    }
+                }
+                out.println("");
+            }
+        } catch (Throwable t) {
+            out.println("config dump reflection failed.");
+            t.printStackTrace(out);
+        }
+    }
+    // RSPY DEBUG END: farming live varp setter
+
+
+
+
+    // RSPY DEBUG START: farming live morph/packet logs
+    public static boolean RSPY_FARM_LIVE_LOG = false;
+
+    public static void rspyFarmLog(String msg) {
+        try {
+            java.io.File dir = new java.io.File("rspy_farming_tests");
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            java.io.File file = new java.io.File(dir, "farming_live_debug.log");
+            java.io.PrintWriter out = new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(file, true)));
+            out.println(System.currentTimeMillis() + " " + msg);
+            out.close();
+
+            System.out.println("RSPY_FARM " + msg);
+        } catch (Throwable t) {
+            System.out.println("RSPY_FARM_LOG_FAILED " + t);
+        }
+    }
+
+    private boolean rspyHandleFarmLiveLogCommand(String rawCommand) {
+        if (rawCommand == null) {
+            return false;
+        }
+
+        String cmd = rawCommand.trim();
+        String lower = cmd.toLowerCase();
+
+        if (!lower.startsWith("::farmlog")) {
+            return false;
+        }
+
+        try {
+            if (lower.indexOf(" off") >= 0) {
+                RSPY_FARM_LIVE_LOG = false;
+                rspyFarmLog("farmlog off");
+            } else if (lower.indexOf(" clear") >= 0) {
+                java.io.File file = new java.io.File("rspy_farming_tests", "farming_live_debug.log");
+                if (file.exists()) {
+                    file.delete();
+                }
+                RSPY_FARM_LIVE_LOG = true;
+                rspyFarmLog("farmlog clear/on");
+            } else {
+                RSPY_FARM_LIVE_LOG = true;
+                rspyFarmLog("farmlog on/status");
+            }
+
+            System.out.println("RSPY farm live log enabled=" + RSPY_FARM_LIVE_LOG + " file=rspy_farming_tests/farming_live_debug.log");
+        } catch (Throwable t) {
+            System.out.println("RSPY farmlog command failed:");
+            t.printStackTrace();
+        }
+
+        return true;
+    }
+
+    private static boolean rspyFarmInterestingConfigId(int id) {
+        return id == 511 || id == 529 || id == 504 || id == 505
+            || (id >= 700 && id <= 800)
+            || (id >= 4770 && id <= 4780);
+    }
+    // RSPY DEBUG END: farming live morph/packet logs
+
+
+    // RSPY DEBUG START: farming automatic varp/morph probe
+    private boolean rspyHandleFarmAutoProbeCommand(String rawCommand) {
+        if (rawCommand == null) {
+            return false;
+        }
+
+        String cmd = rawCommand.trim();
+        String lower = cmd.toLowerCase();
+
+        if (!lower.startsWith("::farmauto")
+                && !lower.startsWith("::farmprobe")
+                && !lower.startsWith("::farmdumpauto")) {
+            return false;
+        }
+
+        java.io.File dir = new java.io.File("rspy_farming_tests");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        java.io.File file = new java.io.File(dir, "farming_auto_probe_" + System.currentTimeMillis() + ".txt");
+        java.io.PrintWriter out = null;
+
+        try {
+            out = new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(file)));
+            boolean full = lower.indexOf("full") >= 0;
+
+            out.println("============================================================");
+            out.println("RSPY FARMING AUTOMATIC VARP / MORPH PROBE");
+            out.println("command=" + cmd);
+            out.println("timeMillis=" + System.currentTimeMillis());
+            out.println("clientClass=" + this.getClass().getName());
+            out.println("workingDir=" + new java.io.File(".").getAbsolutePath());
+            out.println("============================================================");
+            out.println("");
+
+            rspyFarmAutoProbe(out, full);
+
+            out.flush();
+            System.out.println("RSPY farmauto wrote: " + file.getAbsolutePath());
+        } catch (Throwable t) {
+            System.out.println("RSPY farmauto failed:");
+            t.printStackTrace();
+            if (out != null) {
+                out.println("RSPY farmauto failed:");
+                t.printStackTrace(out);
+            }
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void rspyFarmAutoProbe(java.io.PrintWriter out, boolean full) throws Exception {
+        int[] candidateVarps = new int[] {
+            503, 504, 505, 506, 507, 508, 511,
+            529,
+            700, 701, 702, 703, 704, 705, 706, 707,
+            708, 709, 710, 711, 712, 713, 714, 715,
+            716, 717, 718, 719, 720,
+            780, 781, 782, 783,
+            4771, 4772, 4773, 4774
+        };
+        int[] shifts = new int[] {0, 8, 16, 24};
+        int[] states = full
+            ? new int[] {0, 1, 2, 3, 4, 8, 0x20, 0x40 | 3, 0x80 | 3, 0xC0 | 3}
+            : new int[] {3};
+
+        java.util.ArrayList configFields = rspyFarmFindConfigArrayFields(out);
+        out.println("CONFIG_ARRAY_FIELDS count=" + configFields.size());
+        for (int i = 0; i < configFields.size(); i++) {
+            java.lang.reflect.Field f = (java.lang.reflect.Field) configFields.get(i);
+            Object arr = f.get(this);
+            out.println("  " + f.getName() + " length=" + java.lang.reflect.Array.getLength(arr));
+        }
+        out.println("");
+
+        java.util.ArrayList morphMethods = null;
+        java.util.ArrayList controllers = new java.util.ArrayList();
+
+        for (int objectId = 7500; objectId <= 8700; objectId++) {
+            Object def = rspyFarmLookupLoc(objectId);
+            if (def == null) {
+                continue;
+            }
+
+            if (morphMethods == null) {
+                morphMethods = rspyFarmFindMorphMethods(def.getClass(), out);
+            }
+
+            RspyFarmControllerInfo info = rspyFarmGetControllerInfo(def, objectId);
+            if (info == null) {
+                continue;
+            }
+
+            controllers.add(info);
+        }
+
+        out.println("MORPH_METHODS count=" + (morphMethods == null ? 0 : morphMethods.size()));
+        if (morphMethods != null) {
+            for (int i = 0; i < morphMethods.size(); i++) {
+                java.lang.reflect.Method m = (java.lang.reflect.Method) morphMethods.get(i);
+                out.println("  " + m.getName());
+            }
+        }
+        out.println("");
+
+        out.println("CONTROLLERS count=" + controllers.size());
+        for (int i = 0; i < controllers.size(); i++) {
+            RspyFarmControllerInfo c = (RspyFarmControllerInfo) controllers.get(i);
+            out.println("CTRL object=" + c.objectId
+                + " name=" + c.name
+                + " varbit=" + c.varbit
+                + " varp=" + c.varp
+                + " childLen=" + (c.children == null ? -1 : c.children.length)
+                + " field=" + c.childFieldName
+            );
+            if (c.children != null) {
+                out.print("  first32=");
+                for (int j = 0; j < c.children.length && j < 32; j++) {
+                    if (j > 0) {
+                        out.print(",");
+                    }
+                    out.print(j + ":" + c.children[j]);
+                }
+                out.println("");
+            }
+        }
+        out.println("");
+
+        if (morphMethods == null || morphMethods.size() == 0) {
+            out.println("NO_MORPH_METHODS_FOUND");
+            out.println("This means the command found controller tables but could not invoke the client's live override resolver by reflection.");
+            return;
+        }
+
+        int[][] saved = rspyFarmSaveConfigSnapshot(configFields, candidateVarps);
+
+        try {
+            out.println("BASELINE_MORPH");
+            for (int i = 0; i < controllers.size(); i++) {
+                RspyFarmControllerInfo c = (RspyFarmControllerInfo) controllers.get(i);
+                Object def = rspyFarmLookupLoc(c.objectId);
+                int child = rspyFarmInvokeFirstMorphChild(def, morphMethods);
+                int childIdx = rspyFarmFindChildIndex(c.children, child);
+                c.baselineChild = child;
+                c.baselineIndex = childIdx;
+                out.println("BASE object=" + c.objectId + " varbit=" + c.varbit + " childIndex=" + childIdx + " childId=" + child);
+            }
+            out.println("");
+
+            out.println("CANDIDATE_HITS");
+            out.println("Format: HIT varp=<id> shift=<shift> state=<state> value=<packed> object=<controller> varbit=<objectVarbit> base=<idx/id> after=<idx/id> name=<name>");
+            out.println("");
+
+            for (int v = 0; v < candidateVarps.length; v++) {
+                int varpId = candidateVarps[v];
+
+                for (int s = 0; s < shifts.length; s++) {
+                    int shift = shifts[s];
+
+                    for (int st = 0; st < states.length; st++) {
+                        int state = states[st] & 0xFF;
+                        int packed = state << shift;
+
+                        rspyFarmZeroCandidateVarps(configFields, candidateVarps);
+                        rspyFarmSetConfigValue(configFields, varpId, packed);
+
+                        int hits = 0;
+
+                        for (int i = 0; i < controllers.size(); i++) {
+                            RspyFarmControllerInfo c = (RspyFarmControllerInfo) controllers.get(i);
+                            Object def = rspyFarmLookupLoc(c.objectId);
+                            int child = rspyFarmInvokeFirstMorphChild(def, morphMethods);
+                            int childIdx = rspyFarmFindChildIndex(c.children, child);
+
+                            if (child != c.baselineChild || childIdx != c.baselineIndex) {
+                                hits++;
+                                out.println("HIT varp=" + varpId
+                                    + " shift=" + shift
+                                    + " state=" + state
+                                    + " value=" + packed
+                                    + " object=" + c.objectId
+                                    + " varbit=" + c.varbit
+                                    + " baseIndex=" + c.baselineIndex
+                                    + " baseChild=" + c.baselineChild
+                                    + " afterIndex=" + childIdx
+                                    + " afterChild=" + child
+                                    + " name=" + c.name
+                                );
+                            }
+                        }
+
+                        if (hits > 0) {
+                            out.println("SUMMARY varp=" + varpId + " shift=" + shift + " state=" + state + " value=" + packed + " hits=" + hits);
+                            out.println("");
+                        }
+                    }
+                }
+            }
+        } finally {
+            rspyFarmRestoreConfigSnapshot(configFields, candidateVarps, saved);
+        }
+
+        out.println("");
+        out.println("DONE");
+    }
+
+    private java.util.ArrayList rspyFarmFindConfigArrayFields(java.io.PrintWriter out) {
+        java.util.ArrayList fields = new java.util.ArrayList();
+
+        try {
+            java.lang.reflect.Field[] all = this.getClass().getDeclaredFields();
+
+            for (int i = 0; i < all.length; i++) {
+                java.lang.reflect.Field f = all[i];
+                f.setAccessible(true);
+
+                Class type = f.getType();
+                if (!(type.isArray() && type.getComponentType() == Integer.TYPE)) {
+                    continue;
+                }
+
+                Object arr = f.get(this);
+                if (arr == null) {
+                    continue;
+                }
+
+                int len = java.lang.reflect.Array.getLength(arr);
+                if (len < 530) {
+                    continue;
+                }
+
+                String name = f.getName().toLowerCase();
+                boolean likely =
+                    name.equals("varps")
+                    || name.equals("varcache")
+                    || name.indexOf("varp") >= 0
+                    || name.indexOf("varcache") >= 0
+                    || name.indexOf("setting") >= 0
+                    || name.indexOf("config") >= 0;
+
+                if (likely) {
+                    fields.add(f);
+                }
+            }
+        } catch (Throwable t) {
+            out.println("CONFIG_FIELD_SCAN_FAILED " + t);
+            t.printStackTrace(out);
+        }
+
+        return fields;
+    }
+
+    private int[][] rspyFarmSaveConfigSnapshot(java.util.ArrayList fields, int[] varps) throws Exception {
+        int[][] saved = new int[fields.size()][varps.length];
+
+        for (int f = 0; f < fields.size(); f++) {
+            java.lang.reflect.Field field = (java.lang.reflect.Field) fields.get(f);
+            Object arr = field.get(this);
+            int len = java.lang.reflect.Array.getLength(arr);
+
+            for (int v = 0; v < varps.length; v++) {
+                int idx = varps[v];
+                saved[f][v] = (idx >= 0 && idx < len) ? java.lang.reflect.Array.getInt(arr, idx) : 0;
+            }
+        }
+
+        return saved;
+    }
+
+    private void rspyFarmRestoreConfigSnapshot(java.util.ArrayList fields, int[] varps, int[][] saved) throws Exception {
+        for (int f = 0; f < fields.size(); f++) {
+            java.lang.reflect.Field field = (java.lang.reflect.Field) fields.get(f);
+            Object arr = field.get(this);
+            int len = java.lang.reflect.Array.getLength(arr);
+
+            for (int v = 0; v < varps.length; v++) {
+                int idx = varps[v];
+                if (idx >= 0 && idx < len) {
+                    java.lang.reflect.Array.setInt(arr, idx, saved[f][v]);
+                }
+            }
+        }
+    }
+
+    private void rspyFarmZeroCandidateVarps(java.util.ArrayList fields, int[] varps) throws Exception {
+        for (int f = 0; f < fields.size(); f++) {
+            java.lang.reflect.Field field = (java.lang.reflect.Field) fields.get(f);
+            Object arr = field.get(this);
+            int len = java.lang.reflect.Array.getLength(arr);
+
+            for (int v = 0; v < varps.length; v++) {
+                int idx = varps[v];
+                if (idx >= 0 && idx < len) {
+                    java.lang.reflect.Array.setInt(arr, idx, 0);
+                }
+            }
+        }
+    }
+
+    private void rspyFarmSetConfigValue(java.util.ArrayList fields, int varpId, int value) throws Exception {
+        for (int f = 0; f < fields.size(); f++) {
+            java.lang.reflect.Field field = (java.lang.reflect.Field) fields.get(f);
+            Object arr = field.get(this);
+            int len = java.lang.reflect.Array.getLength(arr);
+            if (varpId >= 0 && varpId < len) {
+                java.lang.reflect.Array.setInt(arr, varpId, value);
+            }
+        }
+    }
+
+    private Object rspyFarmLookupLoc(int objectId) throws Exception {
+        Class objectClass = rspyFarmFindClass(new String[] {"ObjectDef", "ObjectDefinition", "LocType", "Class46", "Class8"});
+        if (objectClass == null) {
+            return null;
+        }
+
+        java.lang.reflect.Method[] methods = objectClass.getDeclaredMethods();
+
+        for (int i = 0; i < methods.length; i++) {
+            java.lang.reflect.Method m = methods[i];
+            Class[] params = m.getParameterTypes();
+            if (params.length == 1 && params[0] == Integer.TYPE && objectClass.isAssignableFrom(m.getReturnType())) {
+                m.setAccessible(true);
+                return m.invoke(null, new Object[] {new Integer(objectId)});
+            }
+        }
+
+        return null;
+    }
+
+    private Class rspyFarmFindClass(String[] names) {
+        for (int i = 0; i < names.length; i++) {
+            try {
+                return Class.forName(names[i]);
+            } catch (Throwable ignored) {
+            }
+        }
+        return null;
+    }
+
+    private java.util.ArrayList rspyFarmFindMorphMethods(Class locClass, java.io.PrintWriter out) {
+        java.util.ArrayList methods = new java.util.ArrayList();
+
+        try {
+            java.lang.reflect.Method[] all = locClass.getDeclaredMethods();
+
+            for (int i = 0; i < all.length; i++) {
+                java.lang.reflect.Method m = all[i];
+                Class[] params = m.getParameterTypes();
+
+                if (params.length == 0 && locClass.isAssignableFrom(m.getReturnType())) {
+                    m.setAccessible(true);
+                    methods.add(m);
+                }
+            }
+        } catch (Throwable t) {
+            out.println("MORPH_METHOD_SCAN_FAILED " + t);
+            t.printStackTrace(out);
+        }
+
+        return methods;
+    }
+
+    private int rspyFarmInvokeFirstMorphChild(Object def, java.util.ArrayList morphMethods) {
+        if (def == null || morphMethods == null) {
+            return -1;
+        }
+
+        for (int i = 0; i < morphMethods.size(); i++) {
+            try {
+                java.lang.reflect.Method m = (java.lang.reflect.Method) morphMethods.get(i);
+                Object result = m.invoke(def, new Object[] {});
+                if (result != null) {
+                    int idx = rspyFarmGetLocIndex(result, -1);
+                    if (idx >= 0) {
+                        return idx;
+                    }
+                }
+            } catch (Throwable ignored) {
+            }
+        }
+
+        return -1;
+    }
+
+    private int rspyFarmGetLocIndex(Object def, int fallback) {
+        if (def == null) {
+            return fallback;
+        }
+
+        try {
+            java.lang.reflect.Field f = def.getClass().getDeclaredField("index");
+            f.setAccessible(true);
+            return f.getInt(def);
+        } catch (Throwable ignored) {
+        }
+
+        return fallback;
+    }
+
+    private int rspyFarmFindChildIndex(int[] children, int childId) {
+        if (children == null || childId < 0) {
+            return -1;
+        }
+
+        for (int i = 0; i < children.length; i++) {
+            if (children[i] == childId) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private RspyFarmControllerInfo rspyFarmGetControllerInfo(Object def, int objectId) {
+        try {
+            Class cls = def.getClass();
+            java.lang.reflect.Field[] fields = cls.getDeclaredFields();
+
+            String name = "";
+            int varbit = -1;
+            int varp = -1;
+            int[] children = null;
+            String childFieldName = "";
+
+            for (int i = 0; i < fields.length; i++) {
+                java.lang.reflect.Field f = fields[i];
+                f.setAccessible(true);
+
+                Class type = f.getType();
+                String fname = f.getName().toLowerCase();
+
+                if (type == String.class) {
+                    Object v = f.get(def);
+                    if (v != null && String.valueOf(v).length() > 0) {
+                        name = String.valueOf(v).replace('\n', ' ').replace('\r', ' ');
+                    }
+                } else if (type == Integer.TYPE) {
+                    int v = f.getInt(def);
+                    if (fname.indexOf("varbit") >= 0 || fname.indexOf("var_bit") >= 0) {
+                        varbit = v;
+                    } else if (fname.equals("varp") || fname.indexOf("varp") >= 0 || fname.indexOf("setting") >= 0 || fname.indexOf("config") >= 0) {
+                        varp = v;
+                    }
+                } else if (type.isArray() && type.getComponentType() == Integer.TYPE) {
+                    Object arr = f.get(def);
+                    if (arr == null) {
+                        continue;
+                    }
+
+                    int len = java.lang.reflect.Array.getLength(arr);
+                    if (len < 4 || len > 300) {
+                        continue;
+                    }
+
+                    int[] values = new int[len];
+                    int farmCount = 0;
+                    int notMinusOne = 0;
+
+                    for (int j = 0; j < len; j++) {
+                        values[j] = java.lang.reflect.Array.getInt(arr, j);
+                        if (values[j] != -1) {
+                            notMinusOne++;
+                        }
+                        if (values[j] >= 7500 && values[j] <= 8700) {
+                            farmCount++;
+                        }
+                    }
+
+                    boolean fieldLooksLikeChildren = fname.indexOf("override") >= 0 || fname.indexOf("child") >= 0 || fname.indexOf("children") >= 0 || fname.indexOf("type") >= 0;
+                    if (fieldLooksLikeChildren && farmCount >= 1 && notMinusOne >= 2) {
+                        children = values;
+                        childFieldName = f.getName();
+                    }
+                }
+            }
+
+            boolean interestingName = name.toLowerCase().indexOf("patch") >= 0
+                || name.toLowerCase().indexOf("herb") >= 0
+                || name.toLowerCase().indexOf("allotment") >= 0
+                || name.toLowerCase().indexOf("tree") >= 0
+                || name.toLowerCase().indexOf("mushroom") >= 0
+                || name.toLowerCase().indexOf("farming") >= 0
+                || name.toLowerCase().indexOf("hops") >= 0
+                || name.toLowerCase().indexOf("bush") >= 0
+                || name.toLowerCase().indexOf("cactus") >= 0;
+
+            boolean interestingVarbit = (varbit >= 700 && varbit <= 800) || (varbit >= 4770 && varbit <= 4780);
+            boolean interestingChildren = children != null && children.length >= 4;
+
+            if (!interestingChildren && !interestingVarbit) {
+                return null;
+            }
+
+            RspyFarmControllerInfo info = new RspyFarmControllerInfo();
+            info.objectId = objectId;
+            info.name = name;
+            info.varbit = varbit;
+            info.varp = varp;
+            info.children = children;
+            info.childFieldName = childFieldName;
+            info.baselineChild = -1;
+            info.baselineIndex = -1;
+            return info;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static final class RspyFarmControllerInfo {
+        int objectId;
+        String name;
+        int varbit;
+        int varp;
+        int[] children;
+        String childFieldName;
+        int baselineChild;
+        int baselineIndex;
+    }
+    // RSPY DEBUG END: farming automatic varp/morph probe
+
+
+    // RSPY DEBUG START: farming varbit definition dump
+    private boolean rspyHandleFarmDefsCommand(String rawCommand) {
+        if (rawCommand == null) {
+            return false;
+        }
+
+        String cmd = rawCommand.trim();
+        String lower = cmd.toLowerCase();
+
+        if (!lower.startsWith("::farmdefs")
+                && !lower.startsWith("::dumpfarmdefs")
+                && !lower.startsWith("::dumpfarmvarbits")) {
+            return false;
+        }
+
+        java.io.File dir = new java.io.File("rspy_farming_tests");
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        java.io.File file = new java.io.File(dir, "farming_varbit_defs_" + System.currentTimeMillis() + ".txt");
+        java.io.PrintWriter out = null;
+
+        try {
+            out = new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(file)));
+
+            out.println("============================================================");
+            out.println("RSPY FARMING VARBIT DEFINITIONS");
+            out.println("command=" + cmd);
+            out.println("timeMillis=" + System.currentTimeMillis());
+            out.println("clientClass=" + this.getClass().getName());
+            out.println("workingDir=" + new java.io.File(".").getAbsolutePath());
+            out.println("============================================================");
+            out.println("");
+
+            rspyFarmDefsDump(out);
+
+            out.flush();
+            System.out.println("RSPY farmdefs wrote: " + file.getAbsolutePath());
+        } catch (Throwable t) {
+            System.out.println("RSPY farmdefs failed:");
+            t.printStackTrace();
+            if (out != null) {
+                out.println("RSPY farmdefs failed:");
+                t.printStackTrace(out);
+            }
+        } finally {
+            if (out != null) {
+                try {
+                    out.close();
+                } catch (Throwable ignored) {
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private void rspyFarmDefsDump(java.io.PrintWriter out) throws Exception {
+        Class varbitClass = rspyFarmDefsFindClass(new String[] {"VarbitType", "VarBitType", "Varbit", "VarBit"});
+        if (varbitClass == null) {
+            out.println("ERROR: Could not find VarbitType class.");
+            return;
+        }
+
+        java.lang.reflect.Field instancesField = null;
+        try {
+            instancesField = varbitClass.getDeclaredField("instances");
+        } catch (Throwable ignored) {
+        }
+
+        if (instancesField == null) {
+            java.lang.reflect.Field[] fields = varbitClass.getDeclaredFields();
+            for (int i = 0; i < fields.length; i++) {
+                java.lang.reflect.Field f = fields[i];
+                if (f.getType().isArray() && f.getType().getComponentType() == varbitClass) {
+                    instancesField = f;
+                    break;
+                }
+            }
+        }
+
+        if (instancesField == null) {
+            out.println("ERROR: Could not find VarbitType.instances array.");
+            return;
+        }
+
+        instancesField.setAccessible(true);
+        Object instances = instancesField.get(null);
+
+        if (instances == null) {
+            out.println("ERROR: VarbitType.instances is null.");
+            return;
+        }
+
+        int varbitCount = java.lang.reflect.Array.getLength(instances);
+        out.println("Varbit class=" + varbitClass.getName());
+        out.println("Varbit instances length=" + varbitCount);
+        out.println("");
+
+        java.util.ArrayList controllers = new java.util.ArrayList();
+
+        for (int objectId = 7500; objectId <= 8700; objectId++) {
+            Object def = rspyFarmDefsLookupLoc(objectId);
+            if (def == null) {
+                continue;
+            }
+
+            RspyFarmDefsController c = rspyFarmDefsGetController(def, objectId);
+            if (c != null) {
+                controllers.add(c);
+            }
+        }
+
+        out.println("CONTROLLERS count=" + controllers.size());
+        out.println("");
+
+        java.util.TreeMap byVarp = new java.util.TreeMap();
+
+        for (int i = 0; i < controllers.size(); i++) {
+            RspyFarmDefsController c = (RspyFarmDefsController) controllers.get(i);
+
+            RspyFarmDefsVarbit vb = rspyFarmDefsGetVarbit(instances, c.varbit);
+            if (vb != null) {
+                c.backingVarp = vb.varp;
+                c.lsb = vb.lsb;
+                c.msb = vb.msb;
+                c.cleanValue = 3 << vb.lsb;
+
+                java.util.ArrayList list = (java.util.ArrayList) byVarp.get(new Integer(vb.varp));
+                if (list == null) {
+                    list = new java.util.ArrayList();
+                    byVarp.put(new Integer(vb.varp), list);
+                }
+                list.add(c);
+            }
+        }
+
+        out.println("BY_BACKING_VARP");
+        java.util.Iterator it = byVarp.keySet().iterator();
+        while (it.hasNext()) {
+            Integer key = (Integer) it.next();
+            java.util.ArrayList list = (java.util.ArrayList) byVarp.get(key);
+            out.println("VARP " + key + " controllers=" + list.size());
+
+            for (int i = 0; i < list.size(); i++) {
+                RspyFarmDefsController c = (RspyFarmDefsController) list.get(i);
+                out.println("  object=" + c.objectId
+                    + " varbit=" + c.varbit
+                    + " bits=" + c.lsb + "-" + c.msb
+                    + " cleanValue=" + c.cleanValue
+                    + " cleanCommand=::farmset " + c.backingVarp + " " + c.cleanValue
+                    + " name=" + c.name
+                );
+            }
+            out.println("");
+        }
+
+        out.println("DETAILED_CONTROLLERS");
+        for (int i = 0; i < controllers.size(); i++) {
+            RspyFarmDefsController c = (RspyFarmDefsController) controllers.get(i);
+            out.println("CTRL object=" + c.objectId
+                + " name=" + c.name
+                + " objectVarbit=" + c.varbit
+                + " objectVarp=" + c.varp
+                + " backingVarp=" + c.backingVarp
+                + " lsb=" + c.lsb
+                + " msb=" + c.msb
+                + " cleanValue=" + c.cleanValue
+                + " childLen=" + (c.children == null ? -1 : c.children.length)
+                + " childField=" + c.childFieldName
+            );
+            if (c.children != null) {
+                out.print("  first64=");
+                for (int j = 0; j < c.children.length && j < 64; j++) {
+                    if (j > 0) {
+                        out.print(",");
+                    }
+                    out.print(j + ":" + c.children[j]);
+                }
+                out.println("");
+            }
+        }
+
+        out.println("");
+        out.println("RAW_FARM_VARBITS_700_800");
+        for (int id = 700; id <= 800 && id < varbitCount; id++) {
+            RspyFarmDefsVarbit vb = rspyFarmDefsGetVarbit(instances, id);
+            if (vb != null) {
+                out.println("VARBIT " + id + " varp=" + vb.varp + " lsb=" + vb.lsb + " msb=" + vb.msb);
+            }
+        }
+
+        out.println("");
+        out.println("RAW_VARBITS_4770_4780");
+        for (int id = 4770; id <= 4780 && id < varbitCount; id++) {
+            RspyFarmDefsVarbit vb = rspyFarmDefsGetVarbit(instances, id);
+            if (vb != null) {
+                out.println("VARBIT " + id + " varp=" + vb.varp + " lsb=" + vb.lsb + " msb=" + vb.msb);
+            }
+        }
+
+        out.println("");
+        out.println("DONE");
+    }
+
+    private Class rspyFarmDefsFindClass(String[] names) {
+        for (int i = 0; i < names.length; i++) {
+            try {
+                return Class.forName(names[i]);
+            } catch (Throwable ignored) {
+            }
+        }
+        return null;
+    }
+
+    private Object rspyFarmDefsLookupLoc(int objectId) throws Exception {
+        Class objectClass = rspyFarmDefsFindClass(new String[] {"ObjectDef", "ObjectDefinition", "LocType", "Class46", "Class8"});
+        if (objectClass == null) {
+            return null;
+        }
+
+        java.lang.reflect.Method[] methods = objectClass.getDeclaredMethods();
+
+        for (int i = 0; i < methods.length; i++) {
+            java.lang.reflect.Method m = methods[i];
+            Class[] params = m.getParameterTypes();
+            if (params.length == 1 && params[0] == Integer.TYPE && objectClass.isAssignableFrom(m.getReturnType())) {
+                m.setAccessible(true);
+                return m.invoke(null, new Object[] {new Integer(objectId)});
+            }
+        }
+
+        return null;
+    }
+
+    private RspyFarmDefsVarbit rspyFarmDefsGetVarbit(Object instances, int id) {
+        try {
+            if (id < 0 || id >= java.lang.reflect.Array.getLength(instances)) {
+                return null;
+            }
+
+            Object inst = java.lang.reflect.Array.get(instances, id);
+            if (inst == null) {
+                return null;
+            }
+
+            Class cls = inst.getClass();
+            java.lang.reflect.Field fVarp = null;
+            java.lang.reflect.Field fLsb = null;
+            java.lang.reflect.Field fMsb = null;
+
+            try { fVarp = cls.getDeclaredField("varp"); } catch (Throwable ignored) {}
+            try { fLsb = cls.getDeclaredField("lsb"); } catch (Throwable ignored) {}
+            try { fMsb = cls.getDeclaredField("msb"); } catch (Throwable ignored) {}
+
+            java.lang.reflect.Field[] fields = cls.getDeclaredFields();
+            for (int i = 0; i < fields.length; i++) {
+                java.lang.reflect.Field f = fields[i];
+                if (f.getType() != Integer.TYPE) {
+                    continue;
+                }
+
+                String n = f.getName().toLowerCase();
+                if (fVarp == null && (n.indexOf("varp") >= 0 || n.indexOf("setting") >= 0 || n.indexOf("config") >= 0)) {
+                    fVarp = f;
+                } else if (fLsb == null && (n.indexOf("lsb") >= 0 || n.indexOf("low") >= 0 || n.indexOf("least") >= 0)) {
+                    fLsb = f;
+                } else if (fMsb == null && (n.indexOf("msb") >= 0 || n.indexOf("high") >= 0 || n.indexOf("most") >= 0)) {
+                    fMsb = f;
+                }
+            }
+
+            if (fVarp == null || fLsb == null || fMsb == null) {
+                return null;
+            }
+
+            fVarp.setAccessible(true);
+            fLsb.setAccessible(true);
+            fMsb.setAccessible(true);
+
+            RspyFarmDefsVarbit vb = new RspyFarmDefsVarbit();
+            vb.varp = fVarp.getInt(inst);
+            vb.lsb = fLsb.getInt(inst);
+            vb.msb = fMsb.getInt(inst);
+            return vb;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private RspyFarmDefsController rspyFarmDefsGetController(Object def, int objectId) {
+        try {
+            Class cls = def.getClass();
+            java.lang.reflect.Field[] fields = cls.getDeclaredFields();
+
+            String name = "";
+            int varbit = -1;
+            int varp = -1;
+            int[] children = null;
+            String childFieldName = "";
+
+            for (int i = 0; i < fields.length; i++) {
+                java.lang.reflect.Field f = fields[i];
+                f.setAccessible(true);
+
+                Class type = f.getType();
+                String fname = f.getName().toLowerCase();
+
+                if (type == String.class) {
+                    Object v = f.get(def);
+                    if (v != null && String.valueOf(v).length() > 0) {
+                        name = String.valueOf(v).replace('\n', ' ').replace('\r', ' ');
+                    }
+                } else if (type == Integer.TYPE) {
+                    int v = f.getInt(def);
+                    if (fname.indexOf("varbit") >= 0 || fname.indexOf("var_bit") >= 0) {
+                        varbit = v;
+                    } else if (fname.equals("varp") || fname.indexOf("varp") >= 0 || fname.indexOf("setting") >= 0 || fname.indexOf("config") >= 0) {
+                        varp = v;
+                    }
+                } else if (type.isArray() && type.getComponentType() == Integer.TYPE) {
+                    Object arr = f.get(def);
+                    if (arr == null) {
+                        continue;
+                    }
+
+                    int len = java.lang.reflect.Array.getLength(arr);
+                    if (len < 4 || len > 300) {
+                        continue;
+                    }
+
+                    int[] values = new int[len];
+                    int farmCount = 0;
+                    int notMinusOne = 0;
+
+                    for (int j = 0; j < len; j++) {
+                        values[j] = java.lang.reflect.Array.getInt(arr, j);
+                        if (values[j] != -1) {
+                            notMinusOne++;
+                        }
+                        if (values[j] >= 7500 && values[j] <= 8700) {
+                            farmCount++;
+                        }
+                    }
+
+                    boolean fieldLooksLikeChildren = fname.indexOf("override") >= 0 || fname.indexOf("child") >= 0 || fname.indexOf("children") >= 0 || fname.indexOf("type") >= 0;
+                    if (fieldLooksLikeChildren && farmCount >= 1 && notMinusOne >= 2) {
+                        children = values;
+                        childFieldName = f.getName();
+                    }
+                }
+            }
+
+            boolean interestingVarbit = (varbit >= 700 && varbit <= 800) || (varbit >= 4770 && varbit <= 4780);
+            boolean interestingChildren = children != null && children.length >= 4;
+
+            if (!interestingChildren && !interestingVarbit) {
+                return null;
+            }
+
+            RspyFarmDefsController info = new RspyFarmDefsController();
+            info.objectId = objectId;
+            info.name = name;
+            info.varbit = varbit;
+            info.varp = varp;
+            info.children = children;
+            info.childFieldName = childFieldName;
+            info.backingVarp = -1;
+            info.lsb = -1;
+            info.msb = -1;
+            info.cleanValue = -1;
+            return info;
+        } catch (Throwable ignored) {
+            return null;
+        }
+    }
+
+    private static final class RspyFarmDefsVarbit {
+        int varp;
+        int lsb;
+        int msb;
+    }
+
+    private static final class RspyFarmDefsController {
+        int objectId;
+        String name;
+        int varbit;
+        int varp;
+        int[] children;
+        String childFieldName;
+        int backingVarp;
+        int lsb;
+        int msb;
+        int cleanValue;
+    }
+    // RSPY DEBUG END: farming varbit definition dump
 }

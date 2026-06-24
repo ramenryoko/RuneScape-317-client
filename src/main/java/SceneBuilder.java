@@ -1436,6 +1436,8 @@ public class SceneBuilder {
                 int x = originX + MapUtil.rotateLocX(locX & 0x7, locZ & 0x7, loc.sizeX, loc.sizeZ, mapRotation);
                 int z = originZ + MapUtil.rotateLocZ(locX & 0x7, locZ & 0x7, loc.sizeX, loc.sizeZ, mapRotation);
 
+                FarmingPatchAudit377.recordMapLoc(locID, x, z, level, locKind, (locRotation + mapRotation) & 0x3);
+
                 if ((x <= 0) || (z <= 0) || (x >= 103) || (z >= 103)) {
                     continue;
                 }
@@ -1512,6 +1514,8 @@ public class SceneBuilder {
                 int locRotation = locInfo & 0x3;
                 int x = locX + originX;
                 int z = locZ + originZ;
+
+                FarmingPatchAudit377.recordMapLoc(locID, x, z, locLevel, locKind, locRotation);
 
                 if ((x > 0) && (z > 0) && (x < 103) && (z < 103)) {
                     int collisionLevel = locLevel;
