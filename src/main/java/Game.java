@@ -1293,12 +1293,17 @@ public class Game extends GameShell {
             LocType.unpack(archiveConfig);
             FloType.unpack(archiveConfig);
             ObjType.unpack(archiveConfig);
+            // Debug: dump all item names/descriptions once after obj.dat/obj.idx load.
+            // ItemNameDumper.dump();
+
             NPCType.unpack(archiveConfig);
             IdkType.unpack(archiveConfig);
             SpotAnimType.unpack(archiveConfig);
             VarpType.unpack(archiveConfig);
             VarbitType.unpack(archiveConfig);
-            FarmingPatchAudit377.dumpLoadedClient();
+            // Farming debug: dump compost bin object morph varp/varbit data once after cache loads.
+            // CompostBinVarpDumper.dump(this);
+            // FarmingPatchAudit377.dumpLoadedClient();
             if (!lowmem) {
                 drawProgress(90, "Unpacking sounds");
                 SoundTrack.unpack(new Buffer(archiveSounds.read("sounds.dat")));
